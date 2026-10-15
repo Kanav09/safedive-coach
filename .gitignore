@@ -1,0 +1,9 @@
+# generated or too big to track; see app/README.md and feasibility/RESULTS.md for how to regenerate
+.DS_Store
+*.log
+app/node_modules/
+app/test/frames*/*.rgb
+feasibility/fullres/
+feasibility/models_extra/
+feasibility/*.pt
+feasibility/out*/overlays/

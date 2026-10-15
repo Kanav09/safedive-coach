@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SafeDive Coach</title>
+<meta name="description" content="Film one lap of your kid swimming. SafeDive Coach reads the body position on the phone and tells you the one thing to fix.">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e4a70">
+<meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><span class="mark" aria-hidden="true"></span><span>SafeDive <b>Coach</b></span></div>
+  <button id="levelPill" class="pill" type="button" title="Your level">Tadpole</button>
+</header>
+
+<main id="app">
+
+  <!-- HOME -->
+  <section id="screen-home" class="screen active">
+    <figure class="hero">
+      <img id="heroImg" src="assets/examples/backstroke_lap.jpg" alt="A swimmer doing backstroke across a community pool, filmed from the deck">
+      <canvas id="heroCanvas" aria-hidden="true"></canvas>
+      <figcaption>
+        <h1>Film one lap.<br>Fix one thing.</h1>
+        <p>The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</p>
+      </figcaption>
+    </figure>
+    <div class="rope" aria-hidden="true"></div>
+
+    <div class="stats">
+      <div><b id="statSessions">0</b><span>laps scored</span></div>
+      <div><b id="statStreak">0</b><span>week streak</span></div>
+      <div><b id="statBest">–</b><span>best score</span></div>
+    </div>
+
+    <div id="homeError" class="notice warn" hidden></div>
+
+    <div class="form">
+      <label class="field"><span>Swimmer's name</span><input id="swimmerName" type="text" placeholder="e.g. Maya" autocomplete="off" maxlength="24"></label>
+      <label class="field"><span>Stroke</span>
+        <select id="strokeSelect">
+          <option value="backstroke">Backstroke or back float</option>
+          <option value="kick">Kickboard kick</option>
+          <option value="freestyle">Freestyle</option>
+          <option value="breaststroke">Breaststroke</option>
+        </select>
+      </label>
+    </div>
+    <button id="btnPick" class="btn primary" type="button">Record or choose a video</button>
+    <input id="fileInput" type="file" accept="video/*" capture="environment" hidden>
+    <button id="btnExamples" class="btn ghost" type="button">See what the app sees</button>
+    <p class="fine">Best results: side of the pool, phone near water level, 10 to 15 seconds of swimming. <a href="#" data-go="guide">How to film</a>.</p>
+    <p class="fine">This is a swim-form helper, not a safety device. An adult must always be watching the water.</p>
+  </section>
+
+  <!-- EXAMPLES: what the app sees -->
+  <section id="screen-examples" class="screen">
+    <h2>What the app sees</h2>
+    <p class="lead">Real frames from our own filming. Tap one and the pose model runs on it right here, on this device, and draws what it found. The yellow line is the torso line the score is built on.</p>
+    <div id="exampleList" class="examples"></div>
+    <button class="btn ghost" type="button" data-go="home">Back</button>
+  </section>
+
+  <!-- GUIDE: how to film -->
+  <section id="screen-guide" class="screen">
+    <h2>How to film a lap the app can read</h2>
+    <p class="lead">The pose model only scores frames where it can see both shoulders and both hips. These five habits came straight out of our test footage.</p>
+    <ol class="rules">
+      <li><b>Stand on the side, not the end.</b> The app measures the angle between shoulders and hips, so it needs a side view.</li>
+      <li><b>Get low.</b> Crouch or sit on the deck so the phone is near water level. From standing height the hips vanish under the surface.</li>
+      <li><b>3 to 5 metres away, landscape.</b> Close enough that the swimmer is a decent size in the frame, far enough to fit a few strokes.</li>
+      <li><b>Start after the push-off, stop before the wall.</b> Standing frames are ignored anyway, but the clip stays short and quick to score.</li>
+      <li><b>One swimmer in the shot.</b> The app follows the most confident person it finds. A crowded lane confuses it.</li>
+    </ol>
+    <div class="compare">
+      <figure><img src="assets/examples/flat_float.jpg" alt="Swimmer floating flat on the back, filmed from the side near water level"><figcaption><b>Reads well.</b> Side-on, low, back float. The model read 98% of frames in this clip.</figcaption></figure>
+      <figure><img src="assets/examples/deck_freestyle.jpg" alt="Swimmer doing freestyle, filmed from standing height on the deck"><figcaption><b>Hard to read.</b> Standing height, face down, splash over the hips. The phone model read under 20% of frames, so the app refuses to score it.</figcaption></figure>
+    </div>
+    <h3>Which situations the phone model reads</h3>
+    <p class="fine">From running our six sample clips through the app's own code (test/run_clips_yolo.js), October 2026.</p>
+    <ul class="bars">
+      <li><span>Treading water</span><i style="--w:99%"></i><em>99%</em></li>
+      <li><span>Body dropped, head back</span><i style="--w:71%"></i><em>71%</em></li>
+      <li><span>Backstroke lap, phone on deck</span><i style="--w:33%"></i><em>33% · scored 89</em></li>
+      <li><span>Standing at the wall</span><i style="--w:30%"></i><em>30% · ignored</em></li>
+      <li><span>Freestyle from the deck</span><i style="--w:18%"></i><em>7–18% · refused</em></li>
+    </ul>
+    <p class="fine">The app needs the body in at least 30% of frames and at least one second of real travelling before it will give a number.</p>
+    <button class="btn ghost" type="button" data-go="examples">See what the app sees</button>
+    <button class="btn ghost" type="button" data-go="home">Back</button>
+  </section>
+
+  <!-- ANALYZE -->
+  <section id="screen-analyze" class="screen">
+    <h2 id="analyzeTitle">Reading the swimmer</h2>
+    <div class="stage"><video id="video" playsinline muted preload="auto"></video><canvas id="overlay"></canvas></div>
+    <canvas id="strip" class="strip" aria-label="Which frames the app could read"></canvas>
+    <div class="readouts">
+      <div><b id="readNow">–</b><span>body now</span></div>
+      <div><b id="readFrac">0%</b><span>readable so far</span></div>
+      <div><b id="readEta">…</b><span>time left</span></div>
+    </div>
+    <div class="progress"><div id="bar"></div></div>
+    <p id="analyzeNote" class="fine">Loading the pose model…</p>
+    <button id="btnCancel" class="btn ghost" type="button">Cancel</button>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="screen-results" class="screen">
+    <div id="resHeader" class="eyebrow"></div>
+    <div id="resScore" class="scoreblock"></div>
+    <div id="resRefuse" class="notice warn" hidden></div>
+    <div id="resParts" class="parts"></div>
+
+    <h3>Step through the lap</h3>
+    <div class="stage"><canvas id="resultCanvas"></canvas></div>
+    <div class="scrubrow">
+      <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Frame">
+      <label class="toggle"><input id="targetToggle" type="checkbox"><span>Show target line</span></label>
+    </div>
+    <div id="scrubReadout" class="fine mono"></div>
+    <canvas id="angleChart" class="chart" aria-label="Body angle over the clip"></canvas>
+    <p class="fine">Blue line: body angle while travelling (0° is flat). Green band: the target. Grey dots: readable but not moving, so not scored. Tap the chart to jump.</p>
+
+    <h3>What to fix</h3>
+    <ul id="resTips" class="tips"></ul>
+
+    <div class="row">
+      <button id="btnSaveCard" class="btn secondary" type="button">Save report card</button>
+      <button id="btnCopyJson" class="btn secondary" type="button">Copy as JSON</button>
+    </div>
+    <button id="btnAgain" class="btn primary" type="button">Score another lap</button>
+  </section>
+
+  <!-- DRILL -->
+  <section id="screen-drill" class="screen">
+    <div class="eyebrow">Drill</div>
+    <h2 id="drillTitle"></h2>
+    <p id="drillWhy" class="lead"></p>
+    <ol id="drillSteps" class="rules"></ol>
+    <p id="drillReps" class="notice"></p>
+    <button id="btnDrillBack" class="btn ghost" type="button">Back to results</button>
+  </section>
+
+  <!-- PROGRESS -->
+  <section id="screen-progress" class="screen">
+    <h2>Progress</h2>
+    <div class="levelcard">
+      <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle id="ringFill" class="ring-fill" cx="50" cy="50" r="42"/></svg>
+      <div><div class="eyebrow">Level</div><b id="levelName">Tadpole</b><p id="levelNext" class="fine"></p></div>
+    </div>
+    <div id="chipRow" class="chips"></div>
+    <canvas id="historyChart" class="chart" aria-label="Scores over time"></canvas>
+    <div id="sessionDetail" class="notice" hidden></div>
+    <div id="historyList" class="list"></div>
+    <p class="fine">Levels: Tadpole, Minnow at 3 laps, Otter at 8, Dolphin at 15, Shark at 25. A week counts toward the streak when at least one lap is scored.</p>
+  </section>
+
+  <!-- ABOUT / EVIDENCE -->
+  <section id="screen-evidence" class="screen">
+    <h2>Why trust the number</h2>
+    <p class="lead">Before writing any screens we ran a pose model over 31 clips we filmed ourselves (16 swimming, 5 treading, 10 acted struggling) and asked one question: does the body angle actually separate flat swimming from a dropped body?</p>
+    <canvas id="studyChart" class="chart" aria-label="Median body angle per clip, by type"></canvas>
+    <div id="studyDetail" class="notice">Tap a dot. Each one is a clip: height is the median body angle, darker means the model could read more of its frames.</div>
+    <p class="lead">It does. When the swimmer is actually swimming, the body reads between 10° and 43°; a vertical body reads 60° to 88°. The swimming dots up near 80° are clips where the kid spent most of the time standing at the wall, which is why the app throws away frames where the shoulders are not travelling. What the model struggles with is <em>seeing</em> the torso at all when the swimmer is face down in splash, so the app refuses to score instead of guessing.</p>
+    <h3>The app's own pipeline on real clips</h3>
+    <table class="table">
+      <thead><tr><th>Clip</th><th>Readable</th><th>Body</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Backstroke lap</td><td>33%</td><td>16°</td><td>89</td></tr>
+        <tr><td>Treading water</td><td>99%</td><td>81°</td><td>47</td></tr>
+        <tr><td>Body dropped (acted)</td><td>71%</td><td>76°</td><td>50</td></tr>
+        <tr><td>Standing at the wall</td><td>30%</td><td>82°</td><td>refused</td></tr>
+        <tr><td>Freestyle from deck (2 clips)</td><td>18%</td><td>–</td><td>refused</td></tr>
+      </tbody>
+    </table>
+    <p class="fine">Pose model: YOLO11n-pose exported to ONNX, run by onnxruntime-web in the browser. The study used the larger YOLO11m at 1280 px, which reads about 60% of swimming frames; the phone model trades some of that for speed. Everything above is reproducible from the repository's test folder.</p>
+    <h3>Honest limits</h3>
+    <ul class="plain">
+      <li>Thresholds come from one pool and one swimmer. They need more swimmers before they mean anything beyond "flat or not".</li>
+      <li>Freestyle filmed from standing height is mostly unreadable with the phone model.</li>
+      <li>The app follows one person. It is not a lifeguard and never will be.</li>
+    </ul>
+    <button class="btn ghost" type="button" data-go="settings">Privacy and settings</button>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="screen-settings" class="screen">
+    <h2>Privacy and settings</h2>
+    <div class="notice">
+      <b>Where your video goes: nowhere.</b> The clip is opened by the browser on this device, the pose model runs here, and only the scores (a few numbers and a date) are kept in this browser's storage. Close the tab and the video is gone.
+    </div>
+    <h3>Consent</h3>
+    <p>Film only swimmers you are responsible for, or who have agreed. For anyone under 18 that means a parent or guardian is doing the filming or has said yes. Do not film other people's children in the background if you can avoid it, and never share a clip without asking.</p>
+    <h3>Your data</h3>
+    <p id="dataSummary" class="fine"></p>
+    <button id="btnClear" class="btn danger" type="button">Delete all scored laps on this device</button>
+    <h3>Credits</h3>
+    <p class="fine">Built for the 2026 Congressional App Challenge by the SafeDive team, Cary, North Carolina. It grew out of our drowning-detection research project. Pose model: Ultralytics YOLO11-pose (AGPL-3.0). Runtime: onnxruntime-web (MIT). All photos are our own. Version <span id="versionTag"></span>.</p>
+    <button class="btn ghost" type="button" data-go="evidence">Back</button>
+  </section>
+
+</main>
+
+<nav class="tabs" aria-label="Main">
+  <button type="button" data-tab="home" class="on"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Score</button>
+  <button type="button" data-tab="guide"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Learn</button>
+  <button type="button" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6 16v-5M11 16V8M16 16v-3M21 16V5" /></svg>Progress</button>
+  <button type="button" data-tab="evidence"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>About</button>
+</nav>
+
+<!-- first-run consent sheet -->
+<div id="consentSheet" class="sheet" hidden>
+  <div class="sheet-card">
+    <div class="eyebrow">Before you start</div>
+    <h2>Two things to know</h2>
+    <p><b>Video never leaves this device.</b> The app reads the swimmer's body position right here and keeps only the scores.</p>
+    <p><b>Film your own swimmer.</b> For a child, that means you are the parent or guardian, or have their say-so.</p>
+    <p class="fine">SafeDive Coach is a swim-form helper. It is not a safety device and does not watch for drowning. An adult must always be watching the water.</p>
+    <label class="toggle big"><input id="consentCheck" type="checkbox"><span>I understand and I'm allowed to film this swimmer</span></label>
+    <button id="btnConsent" class="btn primary" type="button" disabled>Continue</button>
+  </div>
+</div>
+
+<script src="vendor/ort/ort.min.js"></script>
+<script src="js/pose_yolo.js"></script>
+<script src="js/metrics.js"></script>
+<script src="js/scoring.js"></script>
+<script src="js/drills.js"></script>
+<script src="js/examples.js"></script>
+<script src="js/draw.js"></script>
+<script src="js/report.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

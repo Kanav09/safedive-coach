@@ -1,0 +1,62 @@
+[
+  {
+    "clip": "distress_IMG_0377",
+    "frames": 126,
+    "msPerFrame": "894",
+    "readable": "25%",
+    "moving": "0%",
+    "angle": "-",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 25% of the video. Film from the"
+  },
+  {
+    "clip": "normal_swimming_IMG_0380",
+    "frames": 71,
+    "msPerFrame": "874",
+    "readable": "21%",
+    "moving": "0%",
+    "angle": "-",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 21% of the video. Film from the"
+  },
+  {
+    "clip": "normal_swimming_IMG_0384",
+    "frames": 110,
+    "msPerFrame": "877",
+    "readable": "2%",
+    "moving": "0%",
+    "angle": "-",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 2% of the video. Film from the "
+  },
+  {
+    "clip": "normal_swimming_IMG_0388",
+    "frames": 84,
+    "msPerFrame": "876",
+    "readable": "0%",
+    "moving": "0%",
+    "angle": "-",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 0% of the video. Film from the "
+  },
+  {
+    "clip": "normal_swimming_IMG_0389",
+    "frames": 67,
+    "msPerFrame": "897",
+    "readable": "1%",
+    "moving": "0%",
+    "angle": "-",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 1% of the video. Film from the "
+  },
+  {
+    "clip": "treading_water_IMG_0392",
+    "frames": 120,
+    "msPerFrame": "890",
+    "readable": "33%",
+    "moving": "0%",
+    "angle": "-",
+    "score": "REFUSED",
+    "why": "I did not see enough actual swimming. Start recording after the push-o"
+  }
+]

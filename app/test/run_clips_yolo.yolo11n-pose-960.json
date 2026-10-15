@@ -1,0 +1,68 @@
+[
+  {
+    "clip": "distress_IMG_0377",
+    "frames": 84,
+    "msPerFrame": "819",
+    "personSeen": "80%",
+    "readable": "54%",
+    "moving": "19%",
+    "angle": "78",
+    "score": 50,
+    "why": "Hips are sinking. Press the chest down and look at the botto"
+  },
+  {
+    "clip": "normal_swimming_IMG_0380",
+    "frames": 47,
+    "msPerFrame": "826",
+    "personSeen": "77%",
+    "readable": "28%",
+    "moving": "17%",
+    "angle": "74",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 28% of the video. Fil"
+  },
+  {
+    "clip": "normal_swimming_IMG_0384",
+    "frames": 74,
+    "msPerFrame": "818",
+    "personSeen": "59%",
+    "readable": "20%",
+    "moving": "20%",
+    "angle": "8",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 20% of the video. Fil"
+  },
+  {
+    "clip": "normal_swimming_IMG_0388",
+    "frames": 56,
+    "msPerFrame": "810",
+    "personSeen": "11%",
+    "readable": "7%",
+    "moving": "7%",
+    "angle": "52",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 7% of the video. Film"
+  },
+  {
+    "clip": "normal_swimming_IMG_0389",
+    "frames": 45,
+    "msPerFrame": "818",
+    "personSeen": "27%",
+    "readable": "22%",
+    "moving": "20%",
+    "angle": "18",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 22% of the video. Fil"
+  },
+  {
+    "clip": "treading_water_IMG_0392",
+    "frames": 80,
+    "msPerFrame": "816",
+    "personSeen": "95%",
+    "readable": "94%",
+    "moving": "40%",
+    "angle": "85",
+    "score": 49,
+    "why": "Hips are sinking. Press the chest down and look at the botto"
+  }
+]

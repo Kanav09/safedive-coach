@@ -1,0 +1,13 @@
+{
+  "name": "safedive-coach",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Film your kid swimming; the app reads body position and says what to fix.",
+  "scripts": {
+    "start": "node tools/serve.js 8765",
+    "test": "node test/metrics.test.js && node test/scoring.test.js && node test/report.test.js && node test/drills.test.js"
+  },
+  "dependencies": {
+    "onnxruntime-web": "^1.20.1"
+  }
+}
