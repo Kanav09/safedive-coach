@@ -47,6 +47,7 @@ function show(name, opts = {}) {
 function announce(msg) { const el = $('live'); el.textContent = ''; requestAnimationFrame(() => { el.textContent = msg; }); }
 // A short visible note at the bottom of the screen, like a toast, that also reaches screen readers.
 let toastTimer = null;
+function tick(pattern) { try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {} }
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; t.classList.add('show'); announce(msg); clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.classList.remove('show'); setTimeout(() => { t.hidden = true; }, 200); }, 3200); }
 function showError(msg) { show('home'); const box = $('homeError'); box.textContent = msg; box.hidden = false; }
 
@@ -74,7 +75,7 @@ function badgesFor(swimmerId) {
 function withBadges(swimmerId, change) {
   const before = badgesFor(swimmerId); change(); const after = badgesFor(swimmerId);
   const fresh = after.filter(k => !before.includes(k));
-  if (fresh.length) { const b = BADGES.find(x => x.key === fresh[0]); setTimeout(() => toast(`New badge: ${b.name}${fresh.length > 1 ? ` and ${fresh.length - 1} more` : ''}`), 600); }
+  if (fresh.length) { const b = BADGES.find(x => x.key === fresh[0]); setTimeout(() => { toast(`New badge: ${b.name}${fresh.length > 1 ? ` and ${fresh.length - 1} more` : ''}`); tick([10, 40, 10]); }, 600); }
 }
 
 // ---------- home ----------
@@ -205,6 +206,7 @@ async function analyze(src, stroke, swimmer, mode = 'lap') {
   $('analyzeTitle').textContent = mode === 'float' ? 'Timing the float' : 'Reading the swimmer';
   const video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d');
   const note = t => { $('analyzeNote').textContent = t; };
+  $('analyzeStage').classList.add('loading');
   $('bar').style.width = '0%'; $('progressBar').setAttribute('aria-valuenow', 0); $('readNow').textContent = '–'; $('readFrac').textContent = '0%'; $('readEta').textContent = '…';
   drawReadabilityStrip($('strip'), [], null, 1);
   const det = await getDetector(note);
@@ -216,7 +218,7 @@ async function analyze(src, stroke, swimmer, mode = 'lap') {
     video.onloadedmetadata = () => { clearTimeout(timer); res(); };
     video.onerror = () => { clearTimeout(timer); rej(new Error('Could not open that video.')); };
   });
-  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight; $('analyzeStage').classList.remove('loading');
   const duration = Math.min(video.duration || 0, mode === 'float' ? FLOAT_MAX_SECONDS : MAX_SECONDS);
   if (!duration) throw new Error('That video has no length. Try recording again.');
 
@@ -273,6 +275,7 @@ async function analyze(src, stroke, swimmer, mode = 'lap') {
   show('results');                 // charts need their real width, so the screen is shown before drawing
   renderResults();
   announce(result.ok ? `Lap scored ${result.score}. ${scoreWord(result.score)}.` : `Not scored. ${result.reason}`);
+  if (result.ok) tick(result.score >= 80 ? [14, 60, 14] : 14);
   return lastRun;
 }
 
@@ -281,7 +284,7 @@ let chartHit = null;
 function renderResults() {
   const { summary, result, perFrame, times, moving, best, stroke, swimmer, fps, shared } = lastRun;
   $('sharedBanner').hidden = !shared; $('resStageWrap').hidden = !!shared;
-  $('btnSaveCard').hidden = !!shared; $('btnCopyJson').hidden = !!shared; $('btnShareLink').hidden = !!shared; $('shareBox').hidden = true;
+  $('btnSaveCard').hidden = !!shared; $('btnCopyJson').hidden = !!shared; $('btnShareLink').hidden = !!shared; $('shareBox').hidden = true; $('btnMakePlan').hidden = !!shared;
   $('btnAgain').textContent = shared ? 'Score your own lap' : 'Score another lap';
   $('resHeader').textContent = `${swimmer ? swimmer + ' · ' : ''}${STROKES[stroke] || stroke} · ${new Date(lastRun.date).toLocaleDateString()}`;
   const scoreEl = $('resScore'), refuse = $('resRefuse'), parts = $('resParts'), tips = $('resTips');
@@ -291,7 +294,7 @@ function renderResults() {
     refuse.innerHTML = `<b>Not scored.</b> ${esc(result.reason)}<br><span class="fine">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames, travelling in ${Math.round(summary.movingFrac * 100)}%. The app refuses to guess rather than give a number it cannot stand behind. <a href="#" data-go="guide">How to film</a>.</span>`;
     $('btnMakePlan').hidden = true;
   } else {
-    refuse.hidden = true; scoreEl.hidden = false; $('btnMakePlan').hidden = false;
+    refuse.hidden = true; scoreEl.hidden = false; $('btnMakePlan').hidden = !!shared;
     const cls = result.score >= 80 ? 'good' : result.score >= 55 ? 'warn' : 'bad';
     const secs = shared ? summary.scoredFrames : summary.scoredFrames / fps;
     scoreEl.innerHTML = `<div class="num ${cls}">${result.score}</div><div><div class="word">${scoreWord(result.score)}</div><div class="conf">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames · ${secs.toFixed(1)} s of swimming scored</div></div>`;
@@ -332,7 +335,7 @@ function openDrill(key) {
   $('drillTitle').textContent = 'Drill: ' + d.name; $('drillWhy').textContent = d.why;
   $('drillSteps').innerHTML = d.steps.map(s => `<li>${s}</li>`).join(''); $('drillReps').textContent = 'How much: ' + d.reps;
   const done = lastRun && lastRun.sessionId && (store.sessions().find(s => s.id === lastRun.sessionId) || {}).drillDone;
-  $('btnDrillDone').textContent = done ? 'Practised ✓' : 'We practised this'; $('btnDrillDone').disabled = !!done;
+  $('btnDrillDone').textContent = done ? 'Practised' : 'We practised this'; $('btnDrillDone').disabled = !!done;
   show('drill');
 }
 
@@ -376,6 +379,7 @@ function prepareLive(test) {
 }
 async function startLive() {
   const btn = $('btnLiveStart'); btn.setAttribute('aria-busy', 'true'); btn.textContent = 'Starting…'; $('liveError').hidden = true;
+  $('liveWord').textContent = 'Asking for the camera'; $('liveCue').textContent = 'If the browser asks, tap Allow. The picture never leaves the phone.';
   try {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('This browser cannot open the camera. On a phone, use Safari or Chrome.');
     await live.start(liveTest ? 'surface' : 'coach', {
@@ -388,8 +392,9 @@ async function startLive() {
       },
       onDone: r => finishFloat(r, 'camera', activeSwimmer()),
     });
-    $('liveBadge').hidden = false; btn.hidden = true; $('btnLiveStop').hidden = false;
+    $('liveBadge').hidden = false; btn.hidden = true; $('btnLiveStop').hidden = false; $('liveStage').classList.remove('off');
   } catch (e) {
+    $('liveWord').textContent = 'Camera off'; $('liveCue').textContent = 'Tap Start to try again.';
     const msg = e.name === 'NotAllowedError' ? 'Camera permission was refused. Allow the camera for this site in the browser settings and try again.' : e.name === 'NotFoundError' ? 'No camera found on this device.' : e.message;
     $('liveError').textContent = msg; $('liveError').hidden = false;
   }
@@ -397,7 +402,7 @@ async function startLive() {
 }
 function stopLive() {
   const r = live.stop();
-  $('liveBadge').hidden = true; $('btnLiveStart').hidden = false; $('btnLiveStop').hidden = true;
+  $('liveBadge').hidden = true; $('btnLiveStart').hidden = false; $('btnLiveStop').hidden = true; $('liveStage').classList.add('off');
   $('liveWord').textContent = 'Camera off'; $('liveCue').textContent = 'Tap Start to turn on the camera.';
   return r;
 }
@@ -441,7 +446,7 @@ function finishFloat(r, how, swimmer) {
     if (swimmer) { withBadges(swimmer.id, () => store.setSkill(swimmer.id, 'float', { date: new Date().toISOString().slice(0, 10), how: 'app', seconds: r.seconds })); $('floatNote').textContent = `${swimmer.name} stayed at the surface for ${Math.floor(r.seconds)} seconds. The skill is signed off as checked by the camera.`; }
     else $('floatNote').textContent = 'Passed, but there is no swimmer selected to record it for. Add a swimmer on the Score tab and run it again.';
   } else $('floatNote').textContent = r.seconds < 5 ? 'The camera could not keep the swimmer in view long enough. Film from the side, low, with the whole body in the frame, and try again.' : `The longest stretch at the surface was ${Math.floor(r.seconds)} seconds. The skill needs ${target}. Practise floating on the back with ears in the water, then try again.`;
-  show('floatresult'); announce(`Float test ${r.pass ? 'passed' : 'not passed'}: ${Math.floor(r.seconds)} seconds`);
+  show('floatresult'); announce(`Float test ${r.pass ? 'passed' : 'not passed'}: ${Math.floor(r.seconds)} seconds`); if (r.pass) tick([14, 60, 14, 60, 14]);
 }
 
 // ---------- progress ----------
@@ -529,9 +534,15 @@ window.addEventListener('DOMContentLoaded', () => {
   renderSwimmerRows(); refreshHome();
   // consent sheet on first run: a real modal, the rest of the page is inert until Continue
   const setModal = on => { $('app').inert = on; document.querySelector('.tabs').inert = on; document.querySelector('.top').inert = on; };
-  if (!store.consented()) { $('consentSheet').hidden = false; setModal(true); $('consentTitle').focus({ preventScroll: true }); }
+  const sheet = $('consentSheet');
+  if (!store.consented()) { sheet.hidden = false; setModal(true); requestAnimationFrame(() => requestAnimationFrame(() => { sheet.classList.add('open'); $('consentTitle').focus({ preventScroll: true }); })); }
   $('consentCheck').onchange = e => { $('btnConsent').disabled = !e.target.checked; };
-  $('btnConsent').onclick = () => { store.setConsented(); $('consentSheet').hidden = true; setModal(false); $('btnPick').focus(); };
+  $('btnConsent').onclick = () => {
+    store.setConsented(); setModal(false); $('btnPick').focus();
+    sheet.classList.remove('open'); sheet.classList.add('out');           // leaves the way it came: down, a little faster
+    const done = () => { sheet.hidden = true; sheet.classList.remove('out'); };
+    sheet.addEventListener('transitionend', done, { once: true }); setTimeout(done, 400);
+  };
 
   // swimmers
   document.body.addEventListener('click', e => { if (e.target.closest('[data-add-swimmer]')) openAddSwimmer(); });
@@ -557,7 +568,7 @@ window.addEventListener('DOMContentLoaded', () => {
   $('btnCancel').onclick = () => { cancelFlag = true; show('home'); };
   $('btnAgain').onclick = () => { if (lastRun && lastRun.shared) history.replaceState(null, '', location.pathname); show('home'); };
   $('btnDrillBack').onclick = () => show('results');
-  $('btnDrillDone').onclick = () => { if (!lastRun || !lastRun.sessionId) { toast('Noted. Score a lap to keep track of drills.'); return; } withBadges(lastRun.swimmerId, () => store.updateSession(lastRun.sessionId, { drillDone: true })); $('btnDrillDone').textContent = 'Practised ✓'; $('btnDrillDone').disabled = true; toast('Marked as practised.'); };
+  $('btnDrillDone').onclick = () => { if (!lastRun || !lastRun.sessionId) { toast('Noted. Score a lap to keep track of drills.'); return; } withBadges(lastRun.swimmerId, () => store.updateSession(lastRun.sessionId, { drillDone: true })); $('btnDrillDone').textContent = 'Practised'; $('btnDrillDone').disabled = true; toast('Marked as practised.'); };
   $('btnDrillPlan').onclick = () => makePlanFrom(currentDrillKey, lastRun ? lastRun.swimmerId : (activeSwimmer() || {}).id);
   $('btnMakePlan').onclick = () => { const key = lastRun.result.issues.find(k => !NO_DRILL.has(k)) || null; makePlanFrom(key, lastRun.swimmerId !== undefined ? lastRun.swimmerId : (activeSwimmer() || {}).id); };
   $('btnSaveCard').onclick = saveReportCard;

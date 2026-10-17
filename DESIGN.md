@@ -316,3 +316,15 @@ Shipping rasters are the owner's own photographs in `app/assets/examples/*.jpg` 
 - **Don't** add motion beyond the 600 ms meter grow and the 160 ms screen fade-rise; nothing else moves, and reduced motion removes both.
 - **Don't** introduce icon fonts, glyph icons or a component library; icons are inline SVG at 2.2 stroke in `currentColor`, and there are four of them.
 - **Don't** round beyond 3 px on anything but the level stamp; meters, bars and rules stay square.
+
+
+## v0.4 additions (2026-10-17, polish pass with the Apple fluid-interface rules and shadcn contracts, kept inside this world)
+
+- **Type ramp in rem.** The five steps are now `.8125 / 1 / 1.375 / 2 / 3 rem` and the score `6rem`: the same pixels at the default size, and the whole flyer scales with the reader's text-size setting. Spacing and rules stay in px (a print grid does not scale).
+- **Swimmer stamp.** A 52 px circle, 3 px ring in one of the four inks (aqua, sun, overprint green, ink), the initial in Bricolage 800 at 24 px, rotated -8° like the level stamp. Selected: the ring fills with its ink; on aqua and sun the initial stays ink (paper would be under 3:1), on green and ink it prints paper. The "add" stamp is a dashed ink-tint ring.
+- **Badge sheet.** Badges are a sheet of 54 px stamps, not cards: a dashed hairline ring until earned, then an aqua ring with an orange centre multiplied to overprint green (the mark as a seal). Name under in 13 px display, how-to-earn in 11 px ink tint.
+- **Toast.** An ink bar above the tab bar carrying the two-square overprint mark (one hard-stop gradient draws it; no other gradient exists). Arrives on the spring, leaves in 150 ms.
+- **Motion, additions to the grammar.** Two things physically arrive and get the spring (`--spring`, a `linear()` curve, damping about .8, response .3 s): the consent sheet (up from the bottom edge; it leaves the same way, faster) and the toast. Press feedback is instant on the way down (`transition-duration: 0` on `:active`) and eased on the way back, on buttons, tabs and stamps. The stage shows a paper-deep sweep while a clip opens and prints "Nothing is recorded" while the camera is off. The live badge is static. Reduced motion turns the spring into a cross-fade and stops the sweep.
+- **Haptics.** A short `navigator.vibrate` tick on three moments only: a lap scored (a double tick for 80+), a badge earned, the float test passed. Silent where the device has no motor.
+- **Dial.** The live body-line dial is a quarter protractor on the water line: aqua wedge 0–15°, pale 15–30°, the orange needle multiplied so it prints green inside the flat zone; the number at top right in display 800.
+- **Browser surfaces.** Caret in sun-text, `accent-color` aqua, `[hidden]` always wins over any display rule.

@@ -34,11 +34,6 @@
     </figure>
     <p class="hero-sub">The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</p>
 
-    <div id="installHint" class="notice install" hidden>
-      <div><b>Keep it on the home screen.</b> <span id="installText">Works at the pool with no signal once installed.</span></div>
-      <div class="row tight"><button id="btnInstall" class="btn sm primary" type="button">Install</button><button id="btnInstallNo" class="btn sm ghost" type="button">Not now</button></div>
-    </div>
-
     <div class="sectionhead"><span class="label">Swimmer</span><span id="swimmerHint" class="fine"></span></div>
     <div id="swimRowHome" class="swimrow" role="group" aria-label="Choose a swimmer"></div>
     <form id="addSwimmerForm" class="addrow" hidden>
@@ -63,7 +58,7 @@
     <div id="homeError" class="notice warn" role="alert" hidden></div>
 
     <section id="planCard" class="card" hidden>
-      <div class="card-head"><h3>This week</h3><span id="planMeta" class="fine"></span></div>
+      <div class="card-head"><h2>This week</h2><span id="planMeta" class="fine"></span></div>
       <ul id="planList" class="checklist"></ul>
       <div class="row tight"><button id="btnPlanIcs" class="btn sm secondary" type="button">Add to calendar</button><button id="btnPlanClear" class="btn sm ghost" type="button">Clear plan</button></div>
     </section>
@@ -74,6 +69,11 @@
       <div><b id="statBest">–</b><span>best score</span></div>
     </div>
     <div id="lastLap" class="lastlap" hidden><span id="lastLapText"></span><div class="meter" aria-hidden="true"><i id="lastLapFill" style="--w:0%"></i></div></div>
+
+    <div id="installHint" class="notice install" hidden>
+      <div><b>Keep it on the home screen.</b> <span id="installText">Works at the pool with no signal once installed.</span></div>
+      <div class="row tight"><button id="btnInstall" class="btn sm primary" type="button">Install</button><button id="btnInstallNo" class="btn sm ghost" type="button">Not now</button></div>
+    </div>
 
     <button id="safetyLine" class="card linkcard" type="button" data-go="safety">
       <div><b>Water safety</b><span id="safetyLineText" class="fine">Five skills, signed off by you or checked by the camera.</span></div>
@@ -88,7 +88,7 @@
   <section id="screen-live" class="screen">
     <h2 id="liveTitle">Live coach</h2>
     <p id="liveIntro" class="lead">Point the phone at the swimmer from the side. The dial shows the body line against the water as it happens, with one cue you can call out. Nothing is recorded.</p>
-    <div class="stage live"><video id="liveVideo" playsinline muted autoplay></video><canvas id="liveOverlay"></canvas><span id="liveBadge" class="livebadge" hidden>Live</span></div>
+    <div id="liveStage" class="stage live off"><video id="liveVideo" playsinline muted autoplay></video><canvas id="liveOverlay"></canvas><span id="liveBadge" class="livebadge" hidden>Live</span></div>
     <canvas id="dial" class="chart dial" role="img" aria-label="Body line against the water line"></canvas>
     <div class="liveword" role="status" aria-live="polite"><b id="liveWord">Camera off</b><span id="liveCue">Tap Start to turn on the camera.</span></div>
     <div id="holdBox" class="holdbox" hidden>
@@ -175,7 +175,7 @@
   <!-- ANALYZE -->
   <section id="screen-analyze" class="screen">
     <h2 id="analyzeTitle">Reading the swimmer</h2>
-    <div class="stage"><video id="video" playsinline muted preload="auto"></video><canvas id="overlay"></canvas></div>
+    <div id="analyzeStage" class="stage loading"><video id="video" playsinline muted preload="auto"></video><canvas id="overlay"></canvas></div>
     <canvas id="strip" class="strip" role="img" aria-label="Which frames the app could read"></canvas>
     <div class="readouts">
       <div><b id="readNow">–</b><span>body now</span></div>
@@ -270,6 +270,7 @@
     <p class="lead">It does. When the swimmer is actually swimming, the body reads between 10° and 43°; a vertical body reads 60° to 88°. The swimming dots up near 80° are clips where the kid spent most of the time standing at the wall, which is why the app throws away frames where the shoulders are not travelling. What the model struggles with is <em>seeing</em> the torso at all when the swimmer is face down in splash, so the app refuses to score instead of guessing.</p>
     <h3>The app's own pipeline on real clips</h3>
     <table class="table">
+      <caption class="sr-only">The app's own pipeline on the six sample clips</caption>
       <thead><tr><th>Clip</th><th>Readable</th><th>Body</th><th>Result</th></tr></thead>
       <tbody>
         <tr><td>Backstroke lap</td><td>33%</td><td>16°</td><td>89</td></tr>
