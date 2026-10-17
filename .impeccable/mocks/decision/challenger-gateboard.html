@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<title>SafeDive Coach — Gate Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#141414;--ground:#f2f2f2;--alert:#ffb000;--paper:#ffffff;--mute:#5a5a5a;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:390px;height:844px;overflow:hidden;background:var(--ground);color:var(--ink);
+    font-family:"Archivo",Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .mono{font-family:"JetBrains Mono",Menlo,monospace;font-variant-numeric:tabular-nums;}
+  .caps{text-transform:uppercase;letter-spacing:.14em;font-weight:700;}
+  .phone{position:relative;width:390px;height:844px;display:flex;flex-direction:column;}
+  /* header strip */
+  .hdr{height:40px;background:var(--ink);color:var(--paper);display:flex;align-items:center;
+    justify-content:space-between;padding:0 16px;font-size:11px;}
+  .hdr .caps{letter-spacing:.18em;}
+  .hdr .lvl{display:flex;align-items:center;gap:8px;}
+  .hdr .lvl i{display:block;width:8px;height:8px;background:var(--alert);}
+  /* content */
+  .body{flex:1;padding:14px 16px 0;display:flex;flex-direction:column;gap:12px;}
+  .pass{background:var(--paper);border:2px solid var(--ink);}
+  .seg{padding:10px 14px 12px;border-bottom:2px solid var(--ink);}
+  .seg:last-child{border-bottom:0;}
+  .lbl{font-size:10px;color:var(--mute);margin-bottom:4px;}
+  .fld{font-size:22px;font-weight:700;line-height:1.1;}
+  .fld.blank{color:#767676;font-weight:600;border-bottom:2px dashed #c8c8c8;display:inline-block;min-width:160px;padding-bottom:2px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;}
+  .row2 .seg{border-bottom:2px solid var(--ink);}
+  .row2 .seg:first-child{border-right:2px solid var(--ink);}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;}
+  .row3 .seg{border-bottom:0;border-right:2px solid var(--ink);padding:12px 14px 14px;}
+  .row3 .seg:last-child{border-right:0;}
+  .fig{font-size:40px;font-weight:700;line-height:1;letter-spacing:-.02em;}
+  .fig small{font-size:14px;font-weight:700;letter-spacing:0;margin-left:2px;}
+  .perf{height:0;border-top:2px dashed var(--ink);position:relative;}
+  .perf::before,.perf::after{content:"";position:absolute;top:-9px;width:16px;height:16px;border-radius:50%;
+    background:var(--ground);border:2px solid var(--ink);}
+  .perf::before{left:-10px;}
+  .perf::after{right:-10px;}
+  .head{font-size:28px;font-weight:800;line-height:1.05;letter-spacing:-.02em;margin:2px 0 8px;}
+  .sub{font-size:13px;line-height:1.4;color:var(--mute);font-weight:500;}
+  /* buttons */
+  .btn{display:flex;align-items:center;justify-content:space-between;height:60px;padding:0 18px;
+    font-size:14px;border:2px solid var(--ink);}
+  .btn.primary{background:var(--ink);color:var(--paper);}
+  .btn.primary .arrow{color:var(--alert);}
+  .btn.ghost{background:var(--paper);color:var(--ink);height:52px;font-size:13px;}
+  .arrow{font-family:"JetBrains Mono",monospace;font-size:18px;font-weight:700;letter-spacing:0;}
+  /* board */
+  .board{background:var(--paper);border:2px solid var(--ink);}
+  .brow{display:grid;grid-template-columns:72px 1fr 64px;align-items:stretch;border-bottom:2px solid var(--ink);}
+  .brow:last-child{border-bottom:0;}
+  .brow > div{padding:10px 12px;font-size:16px;font-weight:700;display:flex;align-items:center;}
+  .brow .date{border-right:2px solid var(--ink);font-size:15px;}
+  .brow .stk{letter-spacing:.08em;font-size:12px;}
+  .brow .sc{border-left:2px solid var(--ink);justify-content:flex-end;font-size:20px;}
+  .brow.hd > div{padding:6px 12px;font-size:9px;color:var(--mute);background:var(--ground);}
+  .brow.hd .sc{justify-content:flex-end;}
+  .brow.live .sc{background:var(--alert);color:var(--ink);}
+  .fine{font-size:11px;color:var(--mute);font-weight:500;text-align:center;line-height:1.35;}
+  /* tabs */
+  .tabs{height:76px;background:var(--paper);border-top:2px solid var(--ink);display:grid;grid-template-columns:repeat(4,1fr);
+    padding-bottom:12px;}
+  .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:10px;color:var(--mute);position:relative;}
+  .tab i{display:block;width:22px;height:22px;border:2px solid currentColor;}
+  .tab.on{color:var(--ink);}
+  .tab.on::after{content:"";position:absolute;left:18px;right:18px;bottom:6px;height:4px;background:var(--alert);}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header class="hdr">
+    <span class="caps">SafeDive Coach</span>
+    <span class="lvl caps"><i></i>Level Minnow</span>
+  </header>
+
+  <main class="body">
+    <section class="pass" aria-label="Swimmer pass">
+      <div class="row2">
+        <div class="seg"><div class="lbl caps">Swimmer</div><div class="fld blank">Maya</div></div>
+        <div class="seg"><div class="lbl caps">Stroke</div><div class="fld caps" style="letter-spacing:.04em">Backstroke</div></div>
+      </div>
+      <div class="row3">
+        <div class="seg"><div class="lbl caps">Laps</div><div class="fig mono">3</div></div>
+        <div class="seg"><div class="lbl caps">Streak</div><div class="fig mono">1<small>WK</small></div></div>
+        <div class="seg"><div class="lbl caps">Best</div><div class="fig mono">50</div></div>
+      </div>
+      <div class="perf"></div>
+      <div class="seg">
+        <h1 class="head">Film one lap.<br>Fix one thing.</h1>
+        <p class="sub">The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</p>
+      </div>
+    </section>
+
+    <a class="btn primary caps" href="#record">Record or choose a video <span class="arrow">&rarr;</span></a>
+    <a class="btn ghost caps" href="#see">See what the app sees <span class="arrow">&rarr;</span></a>
+
+    <section class="board mono" aria-label="Recent laps">
+      <div class="brow hd caps"><div class="date">Date</div><div class="stk">Stroke</div><div class="sc">Score</div></div>
+      <div class="brow live"><div class="date">10/17</div><div class="stk caps">Freestyle</div><div class="sc">65</div></div>
+      <div class="brow"><div class="date">10/15</div><div class="stk caps">Freestyle</div><div class="sc">50</div></div>
+      <div class="brow"><div class="date">10/15</div><div class="stk caps">Freestyle</div><div class="sc">36</div></div>
+    </section>
+
+    <p class="fine">This is a swim-form helper, not a safety device.</p>
+  </main>
+
+  <nav class="tabs caps">
+    <a class="tab on" href="#score"><i></i>Score</a>
+    <a class="tab" href="#learn"><i></i>Learn</a>
+    <a class="tab" href="#progress"><i></i>Progress</a>
+    <a class="tab" href="#about"><i></i>About</a>
+  </nav>
+</div>
+</body>
+</html>

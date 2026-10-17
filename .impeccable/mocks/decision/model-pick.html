@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<title>SafeDive Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--lam:#f8f8f6;--red:#d1232a;--navy:#0f2a4a;--green:#1d7a46;--rule:#cfd3d6;--ink:#1b2430;--muted:#5b6672;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:390px;height:844px;overflow:hidden;background:var(--lam);color:var(--ink);font-family:"Source Sans 3",system-ui,sans-serif;font-size:16px;line-height:1.35}
+  body{position:relative;display:flex;flex-direction:column}
+  h1,h2,.badge,.stamp,.stat b,.btn,.tab span,.level{font-family:"Bitter",Georgia,serif}
+  /* header */
+  header{background:var(--navy);color:#fff;height:112px;padding:48px 20px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  h1{font-size:24px;font-weight:800;letter-spacing:-.01em}
+  .badge{display:inline-flex;align-items:center;justify-content:center;width:98px;height:38px;border:3px solid #fff;border-radius:6px;font-size:14px;font-weight:800;letter-spacing:.14em;transform:rotate(-4deg);box-shadow:inset 0 0 0 2px var(--navy),inset 0 0 0 3px #fff}
+  /* content */
+  main{flex:1;padding:18px 20px 0;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+  .hero{display:grid;grid-template-columns:118px 1fr;gap:14px;align-items:start}
+  .slot{width:118px;height:118px;background:var(--navy);border-radius:8px;position:relative;border:3px solid #fff;box-shadow:0 0 0 1.5px var(--rule)}
+  .slot small{position:absolute;left:8px;bottom:8px;color:#fff;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+  .hero h2{font-size:26px;line-height:1.08;font-weight:800;color:var(--navy);margin-bottom:8px}
+  .hero p{font-size:14px;color:var(--muted);line-height:1.35}
+  /* skills row */
+  .skills{border-top:1.5px solid var(--navy);border-bottom:1.5px solid var(--navy)}
+  .skill{display:flex;align-items:center;justify-content:space-between;height:40px;border-bottom:1px dashed var(--rule);font-weight:600;font-size:15px}
+  .skill:last-child{border-bottom:0}
+  .stamp{display:inline-flex;align-items:center;justify-content:center;height:26px;padding:0 10px;border:2.5px solid;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.14em;box-shadow:inset 0 0 0 1.5px var(--lam),inset 0 0 0 3px currentColor;opacity:.92}
+  .pass{color:var(--green);transform:rotate(-6deg)}
+  .prac{color:var(--red);transform:rotate(5deg)}
+  /* stats */
+  .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .stat{border:2px solid var(--navy);border-radius:8px;padding:10px 8px 8px;text-align:center;background:#fff}
+  .stat b{display:block;font-size:30px;line-height:1;color:var(--navy);font-weight:800}
+  .stat span{display:block;margin-top:5px;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+  /* form */
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  label{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--navy);margin-bottom:4px}
+  .input{height:48px;border:2px solid var(--navy);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:17px}
+  .input.ph{color:var(--muted)}
+  .input i{font-style:normal;color:var(--navy);font-size:13px}
+  /* buttons */
+  .btn{display:flex;align-items:center;justify-content:center;height:60px;border-radius:12px;font-size:19px;font-weight:800;text-decoration:none;letter-spacing:.01em}
+  .primary{background:var(--red);color:#fff;box-shadow:0 3px 0 #8f1419}
+  .secondary{height:52px;border:2.5px solid var(--navy);color:var(--navy);background:transparent;margin-top:-4px}
+  .fine{font-size:12px;color:var(--muted);text-align:center;margin-top:-4px}
+  /* tab bar */
+  nav{height:84px;flex-shrink:0;border-top:2px solid var(--navy);background:#fff;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 8px 22px}
+  .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--muted);border-radius:10px}
+  .tab .ic{width:24px;height:24px;border:2.5px solid currentColor;border-radius:6px}
+  .tab span{font-size:12px;font-weight:700;letter-spacing:.04em}
+  .tab.active{color:var(--navy)}
+  .tab.active .ic{background:var(--navy)}
+</style>
+</head>
+<body>
+  <header>
+    <h1>SafeDive Coach</h1>
+    <div class="badge">MINNOW</div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="slot"><small>Lap photo</small></div>
+      <div>
+        <h2>Film one lap.<br>Fix one thing.</h2>
+        <p>The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</p>
+      </div>
+    </section>
+
+    <section class="skills">
+      <div class="skill"><span>Head position</span><span class="stamp pass">PASS</span></div>
+      <div class="skill"><span>Body line</span><span class="stamp prac">PRACTISE</span></div>
+    </section>
+
+    <section class="stats">
+      <div class="stat"><b>3</b><span>laps scored</span></div>
+      <div class="stat"><b>1</b><span>week streak</span></div>
+      <div class="stat"><b>50</b><span>best score</span></div>
+    </section>
+
+    <section class="fields">
+      <div>
+        <label>Swimmer's name</label>
+        <div class="input ph">Maya</div>
+      </div>
+      <div>
+        <label>Stroke</label>
+        <div class="input">Backstroke <i>&#9660;</i></div>
+      </div>
+    </section>
+
+    <a class="btn primary" href="#">Record or choose a video</a>
+    <a class="btn secondary" href="#">See what the app sees</a>
+    <p class="fine">This is a swim-form helper, not a safety device.</p>
+  </main>
+
+  <nav>
+    <div class="tab active"><div class="ic"></div><span>Score</span></div>
+    <div class="tab"><div class="ic"></div><span>Learn</span></div>
+    <div class="tab"><div class="ic"></div><span>Progress</span></div>
+    <div class="tab"><div class="ic"></div><span>About</span></div>
+  </nav>
+</body>
+</html>

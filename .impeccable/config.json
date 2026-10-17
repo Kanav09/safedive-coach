@@ -1,3 +1,18 @@
 {
-  "buildPath": "code"
+  "buildPath": "code",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "app/index.html"
+        ],
+        "createdAt": "2026-10-17T19:34:52.641Z",
+        "reason": "direction contract (.impeccable/surfaces/app-index-html.md): the chosen world is a risograph flyer on uncoated paper stock; the owner delegated the direction choice to Claude on 2026-10-17 after a decision round"
+      }
+    ]
+  }
 }

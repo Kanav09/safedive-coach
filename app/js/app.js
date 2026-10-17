@@ -39,6 +39,14 @@ function refreshHome() {
   $('statBest').textContent = s.length ? Math.max(...s.map(x => x.score)) : '–';
   $('levelPill').textContent = levelFor(s.length).name;
   $('swimmerName').value = getItem(NAME_KEY) || '';
+  // the last scored lap as one overprint meter: orange score over the aqua strong-lap zone (80 and up)
+  const last = s[s.length - 1], lap = $('lastLap');
+  if (last) {
+    const angle = last.torsoAngle === null || last.torsoAngle === undefined ? '' : ` · body line ${last.torsoAngle.toFixed(0)}° from flat`;
+    $('lastLapText').innerHTML = `Last lap <b>${last.score}</b> · ${last.swimmer ? last.swimmer + ' · ' : ''}${new Date(last.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}${angle}`;
+    $('lastLapFill').style.setProperty('--w', `${last.score}%`);
+    lap.hidden = false;
+  } else lap.hidden = true;
 }
 function showError(msg) { show('home'); const box = $('homeError'); box.textContent = msg; box.hidden = false; }
 
@@ -121,7 +129,7 @@ function seekTo(video, t) {
     video.onseeked = done; video.currentTime = t;
   });
 }
-function fmtEta(sec) { return sec < 1 ? 'nearly done' : sec < 60 ? `${Math.round(sec)} s` : `${Math.ceil(sec / 60)} min`; }
+function fmtEta(sec) { return sec < 1 ? 'almost' : sec < 60 ? `${Math.round(sec)} s` : `${Math.ceil(sec / 60)} min`; }
 
 async function analyze(src, stroke, swimmer) {
   cancelFlag = false;
@@ -210,8 +218,10 @@ function renderResults() {
     scoreEl.innerHTML = `<div class="num ${cls}">${result.score}</div><div><div class="word">${scoreWord(result.score)}</div><div class="conf">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames · ${(summary.scoredFrames / fps).toFixed(1)} s of swimming scored</div></div>`;
     parts.innerHTML = result.parts.map(p => { const f = p.pts / p.max, fill = f >= 0.8 ? 'var(--good)' : f >= 0.5 ? 'var(--warn)' : 'var(--bad)';
       return `<div class="part"><span class="name">${p.name}</span><span class="pts">${p.pts}<span class="fine">/${p.max}</span></span><span class="val">${p.value}</span><span class="meter"><i style="--w:${Math.round(f * 100)}%;--fill:${fill}"></i></span></div>`; }).join('');
-    tips.innerHTML = result.tips.map((t, i) => { const d = drillFor(result.issues[i]);
-      return `<li class="${d ? 'fix' : 'ok'}"><span>${t}</span>${d ? `<button class="btn secondary" type="button" data-drill="${result.issues[i]}">Drill: ${d.name}</button>` : ''}</li>`; }).join('');
+    // one tip, one drill: the first tip that has a drill leads, full size; the rest follow smaller
+    let lead = false;
+    tips.innerHTML = result.tips.map((t, i) => { const d = drillFor(result.issues[i]); const cls = d ? (lead ? 'fix' : 'fix lead') : 'ok'; if (d) lead = true;
+      return `<li class="${cls}"><span>${t}</span>${d ? `<button class="btn secondary" type="button" data-drill="${result.issues[i]}">Drill: ${d.name}</button>` : ''}</li>`; }).join('');
     tips.querySelectorAll('[data-drill]').forEach(b => b.onclick = () => openDrill(b.dataset.drill));
   }
   // frame stepper
@@ -237,7 +247,7 @@ async function drawResultFrame(i) {
 
 function openDrill(key) {
   const d = DRILLS[key]; if (!d) return;
-  $('drillTitle').textContent = d.name; $('drillWhy').textContent = d.why;
+  $('drillTitle').textContent = 'Drill: ' + d.name; $('drillWhy').textContent = d.why;
   $('drillSteps').innerHTML = d.steps.map(s => `<li>${s}</li>`).join(''); $('drillReps').textContent = 'How much: ' + d.reps;
   show('drill');
 }
@@ -272,7 +282,7 @@ function renderProgress() {
   $('levelNext').textContent = lvl.toNext === null ? 'Top level. Keep the streak going.' : `${lvl.toNext} more scored ${lvl.toNext === 1 ? 'lap' : 'laps'} to ${['Minnow', 'Otter', 'Dolphin', 'Shark'][lvl.index]}. Week streak: ${weekStreak(all)}.`;
   const span = lvl.toNext === null ? 1 : (needs[lvl.index + 1] - needs[lvl.index]);
   const frac = lvl.toNext === null ? 1 : (all.length - needs[lvl.index]) / span;
-  $('ringFill').style.strokeDashoffset = 264 * (1 - Math.max(0, Math.min(1, frac)));
+  $('levelFill').style.setProperty('--w', `${Math.round(100 * Math.max(0, Math.min(1, frac)))}%`);
   const last = s.slice(-12);
   historyHit = drawHistoryChart($('historyChart'), last, progressSelected >= 0 ? progressSelected - (s.length - last.length) : -1);
   const detail = $('sessionDetail');
@@ -344,8 +354,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const idle = window.requestIdleCallback || (f => setTimeout(f, 1500));
   idle(() => decorateHero());
 
-  // ?sample=path lets a demo or a test run a clip without the file picker
   const q = new URLSearchParams(location.search);
+  // ?screen=name opens a screen directly (demos, screenshots); ?sample=path runs a clip without the file picker
+  if (q.get('screen')) show(q.get('screen'));
   if (q.get('sample')) analyze(q.get('sample'), q.get('stroke') || 'freestyle', q.get('name') || '').catch(err => { console.error('SafeDive', err); showError(err.message); });
   window.SafeDive = { analyze, show, lastRun: () => lastRun, loadSessions, saveSessions };
 });

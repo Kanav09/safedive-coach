@@ -34,7 +34,7 @@ Everything runs on the device: the pose model, the scoring, the history. No acco
 - Input: one clip, recorded in the app or chosen from the camera roll, 10 to 30 s of one lap; longer clips are capped at 30 s. Stroke is chosen by the parent, never detected.
 - Model: YOLO11n-pose, ONNX, run by onnxruntime-web (wasm, multi-threaded when the server sends COOP/COEP headers). 4 to 8 analysed frames per second; about 0.4 s a frame on a 2024 laptop. Upgrade path is a larger model over WebGPU, not a server.
 - Scoring: 50 points body line, 30 head position, 20 rhythm. A frame counts only when both shoulders and both hips are confidently seen; frames where the swimmer is not travelling (standing at the wall) are ignored. The app refuses to score when the torso is readable in under 30% of frames or under one second of travel.
-- Measured limits, must not be overstated: freestyle filmed from standing height is mostly unreadable with the phone-size model (7 to 18% of frames); backstroke, back float, kicking on a board and anything vertical read well (treading 77 to 87%). Thresholds were tuned on one pool, one swimmer, 31 clips: they separate flat from vertical reliably; head lift and rhythm are starting points.
+- Measured limits, must not be overstated: freestyle filmed from standing height is mostly unreadable with the phone-size model (7 to 18% of frames); backstroke, back float, kicking on a board and anything vertical read well (treading 77 to 87% in the 31-clip study with the larger model; the shipped phone model read 99% of the treading sample clip in the app's own harness, test/run_clips_yolo.js, October 2026). Thresholds were tuned on one pool, one swimmer, 31 clips: they separate flat from vertical reliably; head lift and rhythm are starting points.
 - Storage: per lap only date, first name if typed, stroke, score, body angle, readable %, issue keys, in `localStorage`. Video and keypoints live in memory until the tab closes. "Delete all" is in Settings.
 - Not in scope, by decision: live camera analysis, stroke classification, roll or symmetry metrics, cloud accounts, multi-swimmer tracking, drowning detection. The app is a swim-form helper, not a safety device.
 - Terminology: lap, body line, readable, refuse, drill, levels Tadpole / Minnow / Otter / Dolphin / Shark, week streak.
@@ -43,7 +43,7 @@ Everything runs on the device: the pose model, the scoring, the history. No acco
 
 ## Brand Commitments
 
-The name "SafeDive Coach" stays. The current look is locked (confirmed 2026-10-17): the pool-deck palette (ink, deck, paper, water, rope red), the lane-rope stripe, the condensed display type and the nine-screen layout in `app/index.html` and `app/css/style.css` are the design. Future work refines it; it does not replace it or introduce a component library, framework or build step.
+The name "SafeDive Coach" stays. On 2026-10-17 the owner lifted the earlier design lock: the v0.2 pool-deck look (ink/deck/paper/water/rope palette, lane-rope stripe, condensed display type) is being replaced with a new visual identity because it read as a generic, template-like card app. The replacement keeps the nine-screen structure, every element id the JavaScript uses, the copy, and the no-framework, no-build-step rule: plain HTML, one CSS file, classic script tags. No component library.
 
 Voice as written so far: plain, short, honest about limits, speaks to the parent, never scares ("not a safety device", "an adult must always be watching the water"). The first-run consent sheet text in `app/docs/PRIVACY.md` is considered settled.
 

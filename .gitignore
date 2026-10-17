@@ -8,3 +8,4 @@ feasibility/models_extra/
 feasibility/*.pt
 feasibility/out*/overlays/
 node_modules/
+.impeccable/review/

@@ -29,7 +29,7 @@ function makeReportCard(run, sampleFps) {
   const { result, summary, best, stroke, swimmer } = run;
   const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const ctx = cv.getContext('2d');
-  const navy = '#0e4a70', paper = '#fffdf8', ink = '#10202b', muted = '#5d6b75', rope = '#d8432f';
+  const paper = '#f6f1e4', ink = '#1a1a1a', ink2 = '#4f4b43', aqua = '#00a6c8', sun = '#ff6a2a', sunText = '#b8380a', over = '#004521', track = '#e8e0cc';
   ctx.fillStyle = paper; ctx.fillRect(0, 0, W, H);
   // photo
   const photoH = 640;
@@ -38,36 +38,36 @@ function makeReportCard(run, sampleFps) {
     const dw = best.snap.width * s, dh = best.snap.height * s;
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, photoH); ctx.clip();
     ctx.drawImage(best.snap, (W - dw) / 2, (photoH - dh) / 2, dw, dh); ctx.restore();
-  } else { ctx.fillStyle = navy; ctx.fillRect(0, 0, W, photoH); }
-  // lane rope
-  const g = ctx.createLinearGradient(0, 0, W, 0);
-  for (let i = 0; i <= 36; i++) g.addColorStop(i / 36, i % 2 ? '#ffffff' : (Math.floor(i / 2) % 2 ? rope : navy));
-  ctx.fillStyle = g; ctx.fillRect(0, photoH, W, 10);
-  const condensed = '"Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", sans-serif';
-  const body = '"Avenir Next", "Helvetica Neue", Arial, sans-serif';
-  ctx.fillStyle = muted; ctx.font = `500 30px ${body}`; ctx.textBaseline = 'alphabetic';
+  } else { ctx.fillStyle = aqua; ctx.fillRect(0, 0, W, photoH); }
+  // the two inks overprinted: a registration strip under the photo, green where they meet
+  ctx.fillStyle = aqua; ctx.fillRect(0, photoH, W * 0.6, 12);
+  ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = sun; ctx.fillRect(W * 0.4, photoH, W * 0.6, 12); ctx.restore();
+  const condensed = '"Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif';
+  const body = '"Atkinson Hyperlegible", "Helvetica Neue", Arial, sans-serif';
+  ctx.fillStyle = ink2; ctx.font = `700 30px ${body}`; ctx.textBaseline = 'alphabetic';
   ctx.fillText(`${swimmer ? swimmer + '  ·  ' : ''}${STROKES[stroke] || stroke}  ·  ${new Date().toLocaleDateString()}`, 60, photoH + 70);
   if (result.ok) {
-    ctx.fillStyle = ink; ctx.font = `700 220px ${condensed}`; ctx.fillText(String(result.score), 54, photoH + 290);
-    ctx.font = `600 46px ${condensed}`; ctx.fillStyle = navy; ctx.fillText(scoreWord(result.score).toUpperCase(), 400, photoH + 200);
-    ctx.font = `400 28px ${body}`; ctx.fillStyle = muted; ctx.fillText(`body readable in ${Math.round(summary.readableFrac * 100)}% of frames`, 400, photoH + 250);
+    ctx.fillStyle = result.score >= 80 ? over : result.score >= 55 ? sunText : ink; ctx.font = `800 220px ${condensed}`; ctx.fillText(String(result.score), 54, photoH + 290);
+    ctx.font = `800 46px ${condensed}`; ctx.fillStyle = ink; ctx.fillText(scoreWord(result.score).toUpperCase(), 400, photoH + 200);
+    ctx.font = `400 28px ${body}`; ctx.fillStyle = ink2; ctx.fillText(`body readable in ${Math.round(summary.readableFrac * 100)}% of frames`, 400, photoH + 250);
     let y = photoH + 360;
     for (const p of result.parts) {
-      ctx.fillStyle = ink; ctx.font = `600 32px ${body}`; ctx.fillText(p.name, 60, y);
-      ctx.fillStyle = muted; ctx.font = `400 26px ${body}`; ctx.fillText(p.value, 60, y + 36);
-      ctx.fillStyle = '#e6e1d7'; ctx.fillRect(620, y - 22, 400, 18);
-      ctx.fillStyle = p.pts / p.max >= 0.8 ? '#1f8a5b' : p.pts / p.max >= 0.5 ? '#c7811a' : '#c2362b'; ctx.fillRect(620, y - 22, 400 * p.pts / p.max, 18);
-      ctx.fillStyle = ink; ctx.font = `700 30px ${condensed}`; ctx.textAlign = 'right'; ctx.fillText(`${p.pts}/${p.max}`, 1020, y + 36); ctx.textAlign = 'left';
+      ctx.fillStyle = ink; ctx.font = `700 32px ${body}`; ctx.fillText(p.name, 60, y);
+      ctx.fillStyle = ink2; ctx.font = `400 26px ${body}`; ctx.fillText(p.value, 60, y + 36);
+      // overprint meter: aqua target zone (top fifth), orange reading multiplied over it, green where they overlap
+      ctx.fillStyle = track; ctx.fillRect(620, y - 22, 400, 18); ctx.fillStyle = aqua; ctx.fillRect(620 + 320, y - 22, 80, 18);
+      ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = sun; ctx.fillRect(620, y - 22, 400 * p.pts / p.max, 18); ctx.restore();
+      ctx.fillStyle = ink; ctx.font = `800 30px ${condensed}`; ctx.textAlign = 'right'; ctx.fillText(`${p.pts}/${p.max}`, 1020, y + 36); ctx.textAlign = 'left';
       y += 100;
     }
     const tip = result.tips.find((t, i) => !NO_DRILL.has(result.issues[i])) || result.tips[0];
-    ctx.fillStyle = rope; ctx.font = `700 30px ${condensed}`; ctx.fillText('ONE THING TO FIX', 60, y + 20);
+    ctx.fillStyle = sunText; ctx.font = `800 30px ${condensed}`; ctx.fillText('ONE THING TO FIX', 60, y + 20);
     ctx.fillStyle = ink; ctx.font = `400 30px ${body}`; wrapText(ctx, tip, 60, y + 66, 960, 40);
   } else {
-    ctx.fillStyle = ink; ctx.font = `700 70px ${condensed}`; ctx.fillText('NOT SCORED', 60, photoH + 180);
+    ctx.fillStyle = ink; ctx.font = `800 70px ${condensed}`; ctx.fillText('NOT SCORED', 60, photoH + 180);
     ctx.font = `400 30px ${body}`; wrapText(ctx, result.reason, 60, photoH + 250, 960, 42);
   }
-  ctx.fillStyle = muted; ctx.font = `400 24px ${body}`; ctx.fillText('SafeDive Coach  ·  scored on the phone, nothing uploaded  ·  not a safety device', 60, H - 40);
+  ctx.fillStyle = ink2; ctx.font = `400 24px ${body}`; ctx.fillText('SafeDive Coach  ·  scored on the phone, nothing uploaded  ·  not a safety device', 60, H - 40);
   return cv;
 }
 

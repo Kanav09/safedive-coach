@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Parks & Rec Pool Flyer</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper:#f6f1e4; --aqua:#00a6c8; --sun:#ff6a2a; --ink:#1a1a1a; --over:#004521; }
+  * { box-sizing:border-box; margin:0; }
+  html,body { width:390px; height:844px; overflow:hidden; background:var(--paper); color:var(--ink);
+    font-family:"Atkinson Hyperlegible",system-ui,sans-serif; font-size:16px; line-height:1.4; position:relative; }
+  .d { font-family:"Bricolage Grotesque",sans-serif; font-variation-settings:"opsz" 96,"wdth" 100; font-weight:800; letter-spacing:-.02em; line-height:.92; }
+  .mast { display:flex; align-items:flex-end; justify-content:space-between; padding:14px 16px 0; }
+  .mast .kicker { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--over); font-weight:700; }
+  .mast .name { font-size:30px; } .mast .name b { color:var(--sun); font-weight:800; }
+  .stamp { width:58px; height:58px; border:3px solid var(--aqua); border-radius:50%; display:grid; place-items:center;
+    font:800 11px/1 "Bricolage Grotesque",sans-serif; letter-spacing:.08em; color:var(--aqua); transform:rotate(-8deg); text-transform:uppercase; }
+  .hero { position:relative; margin:12px 0 0; height:236px; background:
+    radial-gradient(circle, var(--aqua) 1px, transparent 1.3px) 0 0/4px 4px,
+    linear-gradient(180deg,#bfe7f0,#6fcbe0); overflow:hidden; }
+  .hero .swimmer { position:absolute; left:30px; top:92px; width:300px; height:52px; border-radius:30px;
+    background:radial-gradient(circle, var(--sun) 1.2px, transparent 1.4px) 0 0/4px 4px, #ffb48f; mix-blend-mode:multiply; transform:rotate(-6deg); }
+  .hero .lane { position:absolute; left:0; right:0; bottom:0; height:92px; background:var(--sun); mix-blend-mode:multiply; opacity:.92; }
+  .hero h1 { position:absolute; left:16px; bottom:14px; color:var(--paper); font-size:44px; }
+  .hero h1 small { display:block; font:400 14px/1.3 "Atkinson Hyperlegible",sans-serif; color:var(--paper); margin-top:8px; max-width:30ch; letter-spacing:0; }
+  .strip { display:grid; grid-template-columns:1fr 1fr 1fr; margin:0 16px; border-top:3px solid var(--ink); border-bottom:1.5px solid var(--ink); }
+  .strip div { padding:10px 0 8px; text-align:center; border-left:1.5px solid var(--ink); } .strip div:first-child { border-left:0; }
+  .strip b { display:block; font:800 34px/1 "Bricolage Grotesque",sans-serif; color:var(--sun); }
+  .strip span { font-size:11px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; }
+  .meter { margin:10px 16px 0; font-size:12px; }
+  .meter .bar { position:relative; height:14px; margin-top:4px; background:#e9e1cf; }
+  .meter .target { position:absolute; left:0; top:0; bottom:0; width:38%; background:var(--aqua); }
+  .meter .read { position:absolute; left:0; top:0; bottom:0; width:52%; background:var(--sun); mix-blend-mode:multiply; }
+  .meter .tick { position:absolute; left:52%; top:-4px; bottom:-4px; width:2px; background:var(--ink); }
+  .form { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 16px 0; }
+  label { font-size:11px; letter-spacing:.1em; text-transform:uppercase; font-weight:700; }
+  .in { display:block; margin-top:4px; height:46px; border:2px solid var(--ink); background:#fffdf7; padding:12px; font-size:16px; color:#7b7568; }
+  .in.sel { color:var(--ink); display:flex; justify-content:space-between; }
+  .btn { margin:12px 16px 0; height:58px; border:2.5px solid var(--ink); display:flex; align-items:center; justify-content:center;
+    font:800 19px "Bricolage Grotesque",sans-serif; letter-spacing:.01em; }
+  .btn.primary { background:var(--sun); box-shadow:4px 4px 0 var(--aqua); }
+  .btn.ghost { margin-top:10px; height:48px; border-color:var(--aqua); color:var(--over); font-size:16px; }
+  .fine { margin:10px 16px 0; font-size:12.5px; color:#4a463f; }
+  .tabs { position:absolute; left:0; right:0; bottom:0; height:72px; border-top:2.5px solid var(--ink); background:var(--paper); display:grid; grid-template-columns:repeat(4,1fr); }
+  .tabs div { display:grid; place-items:center; align-content:center; gap:4px; font:700 11px "Bricolage Grotesque",sans-serif; letter-spacing:.08em; text-transform:uppercase; }
+  .tabs i { width:22px; height:22px; border:2.5px solid var(--ink); border-radius:6px; }
+  .tabs .on { position:relative; color:var(--sun); } .tabs .on i { border-color:var(--sun); background:var(--sun); }
+  .tabs .on::after { content:""; position:absolute; left:14px; right:14px; top:-2.5px; height:6px; background:var(--sun); }
+</style></head><body>
+  <div class="mast">
+    <div><div class="kicker">Town pool · swim-form helper</div><div class="d name">SafeDive <b>Coach</b></div></div>
+    <div class="stamp">Minnow</div>
+  </div>
+  <div class="hero"><div class="swimmer"></div><div class="lane"></div>
+    <h1 class="d">Film one lap.<br>Fix one thing.<small>The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</small></h1>
+  </div>
+  <div class="strip"><div><b>3</b><span>laps scored</span></div><div><b>1</b><span>week streak</span></div><div><b>50</b><span>best score</span></div></div>
+  <div class="meter">Last lap: body line 24° from flat · target band 0–15°
+    <div class="bar"><div class="target"></div><div class="read"></div><div class="tick"></div></div></div>
+  <div class="form">
+    <div><label>Swimmer's name</label><div class="in">e.g. Maya</div></div>
+    <div><label>Stroke</label><div class="in sel">Backstroke <span>▾</span></div></div>
+  </div>
+  <div class="btn primary">Record or choose a video</div>
+  <div class="btn ghost">See what the app sees</div>
+  <p class="fine">Best results: side of the pool, phone near water level, 10 to 15 seconds of swimming. This is a swim-form helper, not a safety device.</p>
+  <div class="tabs"><div class="on"><i></i>Score</div><div><i></i>Learn</div><div><i></i>Progress</div><div><i></i>About</div></div>
+</body></html>

@@ -51,7 +51,7 @@ Swimmers are small in the frame and half under water, which MoveNet was never tr
 | file | what it does |
 |---|---|
 | `index.html` | the screens: home, what the app sees, how to film, reading, results, drill, progress, about, settings |
-| `css/style.css` | styling, phone-first, light and dark; pool-deck palette, lane-rope accent |
+| `css/style.css` | styling, phone-first, light only (it is read in sunlight); two-ink risograph look: paper, aqua, orange, black for words, green where the inks overprint. The system is written up in `../DESIGN.md` |
 | `js/app.js` | screen logic, the analysis loop, results with scrubber, progress, consent |
 | `js/draw.js` | skeleton, target line, readability strip, the three charts (each returns a tap hit-test) |
 | `js/drills.js` | one drill per coaching point; `js/examples.js` the real frames for the live demo |

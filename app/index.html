@@ -7,14 +7,14 @@
 <meta name="description" content="Film one lap of your kid swimming. SafeDive Coach reads the body position on the phone and tells you the one thing to fix.">
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0e4a70">
+<meta name="theme-color" content="#f6f1e4">
 <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
 
 <header class="top">
   <div class="brand"><span class="mark" aria-hidden="true"></span><span>SafeDive <b>Coach</b></span></div>
-  <button id="levelPill" class="pill" type="button" title="Your level">Tadpole</button>
+  <button id="levelPill" class="pill" type="button" title="Your level: tap for progress">Tadpole</button>
 </header>
 
 <main id="app">
@@ -26,16 +26,17 @@
       <canvas id="heroCanvas" aria-hidden="true"></canvas>
       <figcaption>
         <h1>Film one lap.<br>Fix one thing.</h1>
-        <p>The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</p>
       </figcaption>
     </figure>
-    <div class="rope" aria-hidden="true"></div>
+    <p class="hero-sub">The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</p>
 
     <div class="stats">
       <div><b id="statSessions">0</b><span>laps scored</span></div>
       <div><b id="statStreak">0</b><span>week streak</span></div>
       <div><b id="statBest">–</b><span>best score</span></div>
     </div>
+
+    <div id="lastLap" class="lastlap" hidden><span id="lastLapText"></span><div class="meter" aria-hidden="true"><i id="lastLapFill" style="--w:0%"></i></div></div>
 
     <div id="homeError" class="notice warn" hidden></div>
 
@@ -60,7 +61,7 @@
   <!-- EXAMPLES: what the app sees -->
   <section id="screen-examples" class="screen">
     <h2>What the app sees</h2>
-    <p class="lead">Real frames from our own filming. Tap one and the pose model runs on it right here, on this device, and draws what it found. The yellow line is the torso line the score is built on.</p>
+    <p class="lead">Real frames from our own filming. Tap one and the pose model runs on it right here, on this device, and draws what it found. The orange line is the torso line the score is built on.</p>
     <div id="exampleList" class="examples"></div>
     <button class="btn ghost" type="button" data-go="home">Back</button>
   </section>
@@ -111,7 +112,7 @@
 
   <!-- RESULTS -->
   <section id="screen-results" class="screen">
-    <div id="resHeader" class="eyebrow"></div>
+    <div id="resHeader" class="meta"></div>
     <div id="resScore" class="scoreblock"></div>
     <div id="resRefuse" class="notice warn" hidden></div>
     <div id="resParts" class="parts"></div>
@@ -124,7 +125,7 @@
     </div>
     <div id="scrubReadout" class="fine mono"></div>
     <canvas id="angleChart" class="chart" aria-label="Body angle over the clip"></canvas>
-    <p class="fine">Blue line: body angle while travelling (0° is flat). Green band: the target. Grey dots: readable but not moving, so not scored. Tap the chart to jump.</p>
+    <p class="fine">Orange line: body angle while travelling (0° is flat). Aqua band: the target; where the line runs through it the ink prints green. Short marks: readable but not moving, so not scored. Tap the chart to jump.</p>
 
     <h3>What to fix</h3>
     <ul id="resTips" class="tips"></ul>
@@ -138,7 +139,6 @@
 
   <!-- DRILL -->
   <section id="screen-drill" class="screen">
-    <div class="eyebrow">Drill</div>
     <h2 id="drillTitle"></h2>
     <p id="drillWhy" class="lead"></p>
     <ol id="drillSteps" class="rules"></ol>
@@ -150,8 +150,8 @@
   <section id="screen-progress" class="screen">
     <h2>Progress</h2>
     <div class="levelcard">
-      <svg class="ring" viewBox="0 0 100 100" aria-hidden="true"><circle class="ring-bg" cx="50" cy="50" r="42"/><circle id="ringFill" class="ring-fill" cx="50" cy="50" r="42"/></svg>
-      <div><div class="eyebrow">Level</div><b id="levelName">Tadpole</b><p id="levelNext" class="fine"></p></div>
+      <b id="levelName">Tadpole</b><p id="levelNext" class="fine"></p>
+      <div class="meter" aria-hidden="true"><i id="levelFill" style="--w:0%"></i></div>
     </div>
     <div id="chipRow" class="chips"></div>
     <canvas id="historyChart" class="chart" aria-label="Scores over time"></canvas>
@@ -216,7 +216,6 @@
 <!-- first-run consent sheet -->
 <div id="consentSheet" class="sheet" hidden>
   <div class="sheet-card">
-    <div class="eyebrow">Before you start</div>
     <h2>Two things to know</h2>
     <p><b>Video never leaves this device.</b> The app reads the swimmer's body position right here and keeps only the scores.</p>
     <p><b>Film your own swimmer.</b> For a child, that means you are the parent or guardian, or have their say-so.</p>

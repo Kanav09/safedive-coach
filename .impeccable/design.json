@@ -1,0 +1,429 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-17T19:45:29Z",
+  "title": "Design System: SafeDive Coach",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "oklch(95.5% 0.016 90)",
+        "tonalRamp": [
+          "oklch(15% 0.016 90)",
+          "oklch(25% 0.02 90)",
+          "oklch(37% 0.025 90)",
+          "oklch(50% 0.03 90)",
+          "oklch(62% 0.025 90)",
+          "oklch(74% 0.021 90)",
+          "oklch(86% 0.016 90)",
+          "oklch(95% 0.012 90)"
+        ]
+      },
+      "paper-bright": {
+        "role": "neutral",
+        "displayName": "Paper Bright",
+        "canonical": "oklch(99% 0.01 95)",
+        "tonalRamp": [
+          "oklch(15% 0.011 95)",
+          "oklch(25% 0.014 95)",
+          "oklch(37% 0.017 95)",
+          "oklch(50% 0.02 95)",
+          "oklch(62% 0.017 95)",
+          "oklch(74% 0.014 95)",
+          "oklch(86% 0.011 95)",
+          "oklch(95% 0.008 95)"
+        ]
+      },
+      "paper-deep": {
+        "role": "neutral",
+        "displayName": "Paper Deep",
+        "canonical": "oklch(90.5% 0.03 90)",
+        "tonalRamp": [
+          "oklch(15% 0.027 90)",
+          "oklch(25% 0.034 90)",
+          "oklch(37% 0.042 90)",
+          "oklch(50% 0.05 90)",
+          "oklch(62% 0.042 90)",
+          "oklch(74% 0.034 90)",
+          "oklch(86% 0.027 90)",
+          "oklch(95% 0.021 90)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(20% 0 0)",
+        "tonalRamp": [
+          "oklch(15% 0.0 0)",
+          "oklch(25% 0.0 0)",
+          "oklch(37% 0.0 0)",
+          "oklch(50% 0.0 0)",
+          "oklch(62% 0.0 0)",
+          "oklch(74% 0.0 0)",
+          "oklch(86% 0.0 0)",
+          "oklch(95% 0.0 0)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink Tint",
+        "canonical": "oklch(40% 0.012 80)",
+        "tonalRamp": [
+          "oklch(15% 0.011 80)",
+          "oklch(25% 0.014 80)",
+          "oklch(37% 0.017 80)",
+          "oklch(50% 0.02 80)",
+          "oklch(62% 0.017 80)",
+          "oklch(74% 0.014 80)",
+          "oklch(86% 0.011 80)",
+          "oklch(95% 0.008 80)"
+        ]
+      },
+      "hair": {
+        "role": "neutral",
+        "displayName": "Hairline (22% ink)",
+        "canonical": "rgba(26, 26, 26, 0.22)",
+        "tonalRamp": [
+          "oklch(15% 0.0 0)",
+          "oklch(25% 0.0 0)",
+          "oklch(37% 0.0 0)",
+          "oklch(50% 0.0 0)",
+          "oklch(62% 0.0 0)",
+          "oklch(74% 0.0 0)",
+          "oklch(86% 0.0 0)",
+          "oklch(95% 0.0 0)"
+        ]
+      },
+      "aqua": {
+        "role": "secondary",
+        "displayName": "Aqua Ink",
+        "canonical": "oklch(66% 0.13 218)",
+        "tonalRamp": [
+          "oklch(15% 0.071 218)",
+          "oklch(25% 0.088 218)",
+          "oklch(37% 0.108 218)",
+          "oklch(50% 0.13 218)",
+          "oklch(62% 0.11 218)",
+          "oklch(74% 0.089 218)",
+          "oklch(86% 0.069 218)",
+          "oklch(95% 0.054 218)"
+        ]
+      },
+      "aqua-text": {
+        "role": "secondary",
+        "displayName": "Aqua Text",
+        "canonical": "oklch(47% 0.09 220)",
+        "tonalRamp": [
+          "oklch(15% 0.049 220)",
+          "oklch(25% 0.061 220)",
+          "oklch(37% 0.075 220)",
+          "oklch(50% 0.09 220)",
+          "oklch(62% 0.076 220)",
+          "oklch(74% 0.062 220)",
+          "oklch(86% 0.048 220)",
+          "oklch(95% 0.037 220)"
+        ]
+      },
+      "aqua-pale": {
+        "role": "secondary",
+        "displayName": "Aqua Tint",
+        "canonical": "oklch(91% 0.04 215)",
+        "tonalRamp": [
+          "oklch(15% 0.027 215)",
+          "oklch(25% 0.034 215)",
+          "oklch(37% 0.042 215)",
+          "oklch(50% 0.05 215)",
+          "oklch(62% 0.042 215)",
+          "oklch(74% 0.034 215)",
+          "oklch(86% 0.027 215)",
+          "oklch(95% 0.021 215)"
+        ]
+      },
+      "sun": {
+        "role": "primary",
+        "displayName": "Sun-Orange Ink",
+        "canonical": "oklch(70% 0.19 42)",
+        "tonalRamp": [
+          "oklch(15% 0.104 42)",
+          "oklch(25% 0.128 42)",
+          "oklch(37% 0.158 42)",
+          "oklch(50% 0.19 42)",
+          "oklch(62% 0.16 42)",
+          "oklch(74% 0.131 42)",
+          "oklch(86% 0.101 42)",
+          "oklch(95% 0.079 42)"
+        ]
+      },
+      "sun-text": {
+        "role": "primary",
+        "displayName": "Sun-Orange Text",
+        "canonical": "oklch(50% 0.17 38)",
+        "tonalRamp": [
+          "oklch(15% 0.093 38)",
+          "oklch(25% 0.115 38)",
+          "oklch(37% 0.141 38)",
+          "oklch(50% 0.17 38)",
+          "oklch(62% 0.143 38)",
+          "oklch(74% 0.117 38)",
+          "oklch(86% 0.09 38)",
+          "oklch(95% 0.071 38)"
+        ]
+      },
+      "over": {
+        "role": "tertiary",
+        "displayName": "Overprint Green",
+        "canonical": "oklch(32% 0.09 158)",
+        "tonalRamp": [
+          "oklch(15% 0.049 158)",
+          "oklch(25% 0.061 158)",
+          "oklch(37% 0.075 158)",
+          "oklch(50% 0.09 158)",
+          "oklch(62% 0.076 158)",
+          "oklch(74% 0.062 158)",
+          "oklch(86% 0.048 158)",
+          "oklch(95% 0.037 158)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "h1; 48 px Bricolage 800 at full width. The hero headline overrides to 44 px (56 px from 600 px) so two lines fit the band."
+      },
+      "score": {
+        "displayName": "Score",
+        "purpose": "The lap score alone, 96 px at 90% width, the doubled top step of the ramp."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "h2 screen titles and the 32 px sun-text numbers in stats strips, readouts and the level card."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "h3 section heads ruled above in 2 px ink, the masthead wordmark, part points, history scores. Buttons use a 700 / 95%-width / 19 px cut."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Atkinson Hyperlegible 400 at 16 px / 1.45 for sentences and controls; 17 px lead, 15 px inside cards, notices, lists and tables."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "13 px Atkinson 700 uppercase at 0.08em for field labels, stat captions, table headers; chips at 0.04em; tab labels and the level stamp use Bricolage at 13 px."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "The only easing; exponential ease-out for the meter grow and the screen rise."
+      },
+      {
+        "name": "meter-grow",
+        "value": "grow .6s var(--ease); @keyframes grow { from { width: 0 } }",
+        "purpose": "The one authored moment: the orange reading growing into the aqua band on the results screen."
+      },
+      {
+        "name": "screen-rise",
+        "value": "rise .16s var(--ease); @keyframes rise { from { opacity: 0; transform: translateY(6px) } }",
+        "purpose": "Screen changes fade and rise 6 px."
+      },
+      {
+        "name": "progress-bar",
+        "value": "transition: width .25s linear",
+        "purpose": "The analysis progress bar (#bar) tracks frames linearly; functional, not authored."
+      },
+      {
+        "name": "hero-overlay",
+        "value": "transition: opacity .5s",
+        "purpose": "The hero's skeleton canvas fades in once the model has read the frame."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce) { .screen.active, .meter i { animation: none !important; transition: none !important } }",
+        "purpose": "Removes the grow and the rise."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "600px",
+        "purpose": "Gutters open to 24 px, the hero gains a 2 px ink frame and a 16:10 ratio, the form splits 1fr / 1.3fr, the consent sheet centres with a 3 px ink border."
+      },
+      {
+        "name": "column-max",
+        "value": "560px",
+        "purpose": "Maximum width of the main column, the masthead content and the tab bar."
+      }
+    ],
+    "canvasInks": {
+      "note": "draw.js reads --paper-bright, --aqua, --aqua-pale, --aqua-text, --sun, --over, --ink, --ink-2, --hair, --paper-deep via getPropertyValue; the video overlay and report.js carry the same hex values as literals.",
+      "overlay": {
+        "bone": "#f6f1e4",
+        "boneEdge": "rgba(26,26,26,.85)",
+        "joint": "#00a6c8",
+        "torso": "#ff6a2a",
+        "target": "#00a6c8 dashed 6/5",
+        "text": "#f6f1e4 on rgba(26,26,26,.74)"
+      },
+      "composite": "globalCompositeOperation = 'multiply' for every orange reading drawn over an aqua target band (angle chart, history chart, report-card band and part bars)."
+    },
+    "provenance": {
+      "rasters": "app/assets/examples/*.jpg are the owner's own photographs (six real frames, model-verified); the hero uses backstroke_lap.jpg greyscale-multiplied over aqua. The pose model is YOLO11n-pose (ONNX). No generated rasters exist in this build.",
+      "fonts": "app/vendor/fonts: BricolageGrotesque-Variable.woff2 (wght 200-800, wdth 75-100), AtkinsonHyperlegible-Regular.woff2, AtkinsonHyperlegible-Bold.woff2.",
+      "seed": "Parks & Rec pool flyer, candidate 4 of the grounded list. seed:24be08711fa4351e",
+      "constraints": "No framework, no build step, plain HTML, one CSS file, classic script tags; every element id used by app/js/app.js is preserved.",
+      "voice": "Plain, short, honest about limits, speaks to the parent, never scares."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one solid orange block on a screen: the main action (Record or choose a video, Continue, the drill button).",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Record or choose a video</button>",
+      "css": ".ds-btn{display:block;width:100%;min-height:56px;padding:12px 16px;font:700 19px/1.15 \"Bricolage Grotesque\",\"Helvetica Neue\",Arial,sans-serif;font-stretch:95%;letter-spacing:.005em;color:#1a1a1a;background:#fffdf7;border:2px solid #1a1a1a;border-radius:3px;cursor:pointer}.ds-btn-primary{background:#ff6a2a}.ds-btn:active{transform:translateY(1px);filter:brightness(.96)}.ds-btn:focus-visible{outline:3px solid #00a6c8;outline-offset:2px}.ds-btn:disabled{background:#fffdf7;border-color:rgba(26,26,26,.22);color:#4f4b43;transform:none;filter:none}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Paper-bright fill with ink border; the plain alternative beside a primary.",
+      "html": "<button class=\"ds-btn ds-btn-secondary\">Score another lap</button>",
+      "css": ".ds-btn{display:block;width:100%;min-height:56px;padding:12px 16px;font:700 19px/1.15 \"Bricolage Grotesque\",\"Helvetica Neue\",Arial,sans-serif;font-stretch:95%;letter-spacing:.005em;color:#1a1a1a;background:#fffdf7;border:2px solid #1a1a1a;border-radius:3px;cursor:pointer}.ds-btn:active{transform:translateY(1px);filter:brightness(.96)}.ds-btn:focus-visible{outline:3px solid #00a6c8;outline-offset:2px}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Outlined aqua, 50 px tall; every secondary 'see', 'show', 'export' action.",
+      "html": "<button class=\"ds-btn ds-btn-ghost\">See what the app sees</button>",
+      "css": ".ds-btn{display:block;width:100%;min-height:56px;padding:12px 16px;font:700 19px/1.15 \"Bricolage Grotesque\",\"Helvetica Neue\",Arial,sans-serif;font-stretch:95%;letter-spacing:.005em;color:#1a1a1a;background:#fffdf7;border:2px solid #1a1a1a;border-radius:3px;cursor:pointer}.ds-btn-ghost{background:transparent;border-color:#00a6c8;color:#00687f;min-height:50px;font-size:17px}.ds-btn:active{transform:translateY(1px);filter:brightness(.96)}.ds-btn:focus-visible{outline:3px solid #00a6c8;outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "50 px paper-bright field with a 2 px ink border under a 13 px uppercase ink-tint label.",
+      "html": "<label class=\"ds-field\"><span>Swimmer's name</span><input class=\"ds-input\" type=\"text\" placeholder=\"e.g. Maya\"></label>",
+      "css": ".ds-field{display:block;font-family:\"Atkinson Hyperlegible\",\"Helvetica Neue\",Arial,sans-serif}.ds-field span{display:block;margin-bottom:5px;font:700 13px \"Atkinson Hyperlegible\",\"Helvetica Neue\",Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#4f4b43}.ds-input{width:100%;height:50px;font:16px \"Atkinson Hyperlegible\",\"Helvetica Neue\",Arial,sans-serif;color:#1a1a1a;background:#fffdf7;border:2px solid #1a1a1a;border-radius:3px;padding:0 12px;appearance:none}.ds-input::placeholder{color:#4f4b43;opacity:1}.ds-input:focus-visible{outline:3px solid #00a6c8;outline-offset:2px}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "13 px bold filter chip; selected inverts to ink on paper.",
+      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-chip ds-chip-on\">Maya</button><button class=\"ds-chip\">Dev</button></div>",
+      "css": ".ds-chip{font:700 13px \"Atkinson Hyperlegible\",\"Helvetica Neue\",Arial,sans-serif;letter-spacing:.04em;padding:8px 12px;border-radius:3px;border:2px solid #1a1a1a;background:#fffdf7;color:#1a1a1a;cursor:pointer}.ds-chip-on{background:#1a1a1a;color:#f6f1e4}.ds-chip:focus-visible{outline:3px solid #00a6c8;outline-offset:2px}"
+    },
+    {
+      "name": "Notice Card",
+      "kind": "card",
+      "refersTo": "notice",
+      "description": "Paper-bright card with a 2 px ink border; the border carries state (orange warn, green good).",
+      "html": "<div class=\"ds-notice ds-notice-warn\">Not scored. The body was readable in 18% of frames. Film side-on, near water level, and try again.</div>",
+      "css": ".ds-notice{background:#fffdf7;border:2px solid #1a1a1a;border-radius:3px;padding:12px 14px;font:15px/1.45 \"Atkinson Hyperlegible\",\"Helvetica Neue\",Arial,sans-serif;color:#1a1a1a}.ds-notice-warn{border-color:#ff6a2a}.ds-notice-good{border-color:#004521}"
+    },
+    {
+      "name": "Tab Bar",
+      "kind": "nav",
+      "refersTo": "tab-bar",
+      "description": "Four equal cells on paper under a 3 px ink rule; inline SVG icons at 2.2 stroke; the active tab is sun-text with a 6 px orange bar across the rule.",
+      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab ds-tab-on\"><svg viewBox=\"0 0 24 24\"><path d=\"M4 7h3l2-2h6l2 2h3v12H4z\"/><circle cx=\"12\" cy=\"13\" r=\"3.5\"/></svg>Score</button><button class=\"ds-tab\"><svg viewBox=\"0 0 24 24\"><path d=\"M5 4h14v16H5z\"/><path d=\"M8 8h8M8 12h8M8 16h5\"/></svg>Learn</button><button class=\"ds-tab\"><svg viewBox=\"0 0 24 24\"><path d=\"M4 20h16\"/><path d=\"M6 16v-5M11 16V8M16 16v-3M21 16V5\"/></svg>Progress</button><button class=\"ds-tab\"><svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 8v5M12 16h.01\"/></svg>About</button></nav>",
+      "css": ".ds-tabs{display:grid;grid-template-columns:repeat(4,1fr);height:72px;background:#f6f1e4;border-top:3px solid #1a1a1a}.ds-tab{position:relative;background:none;border:0;padding:0;color:#1a1a1a;font:700 13px \"Bricolage Grotesque\",\"Helvetica Neue\",Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}.ds-tab-on{color:#b8380a}.ds-tab-on::before{content:\"\";position:absolute;left:18px;right:18px;top:-3px;height:6px;background:#ff6a2a}.ds-tab svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}.ds-tab:focus-visible{outline:3px solid #00a6c8;outline-offset:2px}"
+    },
+    {
+      "name": "Overprint Meter",
+      "kind": "custom",
+      "refersTo": "meter",
+      "description": "The signature: aqua target zone from --band to the right edge, orange reading at --w multiplied over it; the overlap prints overprint green. The reading grows in over 600 ms.",
+      "html": "<div class=\"ds-part\"><span class=\"ds-part-name\">Body line</span><span class=\"ds-part-pts\">34<small>/50</small></span><span class=\"ds-part-val\">25 degrees from flat</span><div class=\"ds-meter\" style=\"--w:68%\"><i></i></div></div>",
+      "css": ".ds-part{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:end;padding:12px 0 14px;border-bottom:1px solid rgba(26,26,26,.22);font-family:\"Atkinson Hyperlegible\",\"Helvetica Neue\",Arial,sans-serif;color:#1a1a1a}.ds-part-name{font-weight:700;grid-column:1;grid-row:1}.ds-part-val{font-size:13px;color:#4f4b43;grid-column:1;grid-row:2}.ds-part-pts{font:800 22px/1 \"Bricolage Grotesque\",\"Helvetica Neue\",Arial,sans-serif;grid-column:2;grid-row:1/span 2;align-self:center}.ds-part-pts small{font:700 13px \"Atkinson Hyperlegible\",sans-serif;color:#4f4b43}.ds-meter{grid-column:1/-1;margin-top:8px;position:relative;height:14px;background:#e8e0cc;--band:80%}.ds-meter::before{content:\"\";position:absolute;left:var(--band);right:0;top:0;bottom:0;background:#00a6c8}.ds-meter i{position:relative;display:block;height:100%;width:var(--w);background:#ff6a2a;mix-blend-mode:multiply;animation:ds-grow .6s cubic-bezier(.16,1,.3,1)}@keyframes ds-grow{from{width:0}}@media (prefers-reduced-motion:reduce){.ds-meter i{animation:none}}"
+    },
+    {
+      "name": "Level Stamp",
+      "kind": "custom",
+      "refersTo": "level-stamp",
+      "description": "The masthead's 58 px aqua ring, rotated -8 degrees, with the swimmer's level in condensed uppercase; the only circle in the system.",
+      "html": "<button class=\"ds-pill\">Minnow</button>",
+      "css": ".ds-pill{width:58px;height:58px;border-radius:50%;border:3px solid #00a6c8;background:transparent;color:#00687f;font:800 13px \"Bricolage Grotesque\",\"Helvetica Neue\",Arial,sans-serif;font-stretch:75%;letter-spacing:.04em;text-transform:uppercase;transform:rotate(-8deg);cursor:pointer;padding:0}.ds-pill:active{transform:rotate(-8deg) scale(.96)}.ds-pill:focus-visible{outline:3px solid #00a6c8;outline-offset:2px}"
+    },
+    {
+      "name": "Ruled Stats Strip",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Three equal cells ruled 3 px above, 2 px below and 2 px between; 32 px sun-text numbers over 13 px uppercase captions.",
+      "html": "<div class=\"ds-stats\"><div><b>4</b><span>Laps scored</span></div><div><b>2</b><span>Week streak</span></div><div><b>89</b><span>Best score</span></div></div>",
+      "css": ".ds-stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:3px solid #1a1a1a;border-bottom:2px solid #1a1a1a;font-family:\"Atkinson Hyperlegible\",\"Helvetica Neue\",Arial,sans-serif}.ds-stats div{padding:10px 4px 8px;text-align:center;border-left:2px solid #1a1a1a}.ds-stats div:first-child{border-left:0}.ds-stats b{display:block;font:800 32px/1 \"Bricolage Grotesque\",\"Helvetica Neue\",Arial,sans-serif;color:#b8380a;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.ds-stats span{display:block;margin-top:4px;font:700 13px \"Atkinson Hyperlegible\",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#4f4b43}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Rec Department Flyer",
+    "overview": "SafeDive Coach is printed, not rendered. The whole app is one two-ink risograph flyer from a town pool's recreation department: cream paper, an aqua ink, a sun-orange ink, and black for the words. It refuses the category default of white cards, one blue, soft shadows and a hero-metric block. Everything sits flat on the paper and is separated by ruled ink lines, the way a photocopied program is laid out with a ruler, and the density is high because the parent reads it once, on a sunlit deck, with wet hands.\n\nThe signature move is that the overprint is the measurement. Aqua and orange are never decoration: aqua prints the target zone, orange prints the swimmer's reading, and wherever the two inks overlap the paper turns deep overprint green. That green is the only \"good\" colour in the app, and it is never painted directly on a surface; it appears only where a reading has reached its target (the meters, the charts, the hero band). State is overprint, never a fourth colour.\n\nThe build keeps the world honest with standard controls. Inputs, buttons, a select, a range, a checkbox and a bottom tab bar are all ordinary web elements given 2 px ink borders and the two inks; the world shows in type, palette, density and the one overprint move, not in invented widgets. Light only: a sunlit deck has no dark mode (`color-scheme: light` is declared and nothing else is themed).",
+    "keyCharacteristics": [
+      "Three inks on paper: aqua, sun-orange, black; green exists only as their overprint.",
+      "Overprint as measurement: `mix-blend-mode: multiply` in CSS and `globalCompositeOperation = 'multiply'` on every canvas.",
+      "Ruled, not carded: 2 px and 3 px ink rules divide content; fills are flat; there are no shadows anywhere.",
+      "One display face carries every heading and every number (Bricolage Grotesque 800); one body face carries every sentence (Atkinson Hyperlegible).",
+      "A fixed five-step type ramp (13, 16, 22, 32, 48 px) with the score alone at the doubled top step (96 px).",
+      "Corners of 3 px on controls and cards, square on meters and rules, a full circle only on the level stamp.",
+      "One authored motion: the orange reading growing into the aqua band."
+    ],
+    "rules": [
+      {
+        "name": "The Overprint Rule",
+        "body": "Green is never a fill you choose. It is what aqua over orange prints, so it may appear on a surface only where a reading has reached its target; write \"good\" with `--over` for type and borders, and produce it with multiply everywhere a measurement is drawn.",
+        "section": "colors"
+      },
+      {
+        "name": "The Three-Ink Rule",
+        "body": "State is overprint, never a fourth colour. Good is green, warning is orange text, bad is ink. No red, no yellow, no grey.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink-Tint Rule",
+        "body": "Secondary text is a tint of ink on paper (`ink-2`), never a grey. Dividers that are not rules are 22% ink (`hair`).",
+        "section": "colors"
+      },
+      {
+        "name": "The Every-Number Rule",
+        "body": "Every number that is read as a result (score, points, stats, readouts, history) is set in Bricolage Grotesque 800. Body copy never carries a headline number.",
+        "section": "typography"
+      },
+      {
+        "name": "The Five-Step Rule",
+        "body": "Text sizes come from the five-step ramp (13, 16, 22, 32, 48 px) and the score at 96 px. The 15, 17 and 19 px cuts for dense copy, lead copy and button labels are the only in-between sizes the build uses; do not add more.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Print Rule",
+        "body": "Nothing lifts. A surface is distinguished from the page by a 2 px ink rule and a paper-bright fill, never by a shadow, a blur or a gradient.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Rule-Weight Rule",
+        "body": "Hierarchy of separation is 3 px ink (chrome and strip tops), 2 px ink (`--rule`, every control, card and section head), 1 px at 22% ink (row dividers). Nothing else.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do draw every measurement as aqua target plus orange reading with multiply, in CSS (`mix-blend-mode: multiply`) or on canvas (`globalCompositeOperation = 'multiply'`), so good prints as overprint green.",
+      "Do set every result number in Bricolage Grotesque 800 and every sentence in Atkinson Hyperlegible, from the five-step ramp (13, 16, 22, 32, 48 px); the score alone at 96 px.",
+      "Do separate content with ink rules (3 px chrome, 2 px controls and sections, 1 px hairline rows) and flat paper-bright fills on a 3 px trim.",
+      "Do use standard web controls (input, select, range, checkbox, button) styled with 2 px ink borders; one solid orange primary per screen, outlined aqua ghosts for everything secondary.",
+      "Do keep targets at least 46 px tall (buttons 56, inputs 50, chips 8 x 12 padding, range thumb 28) and keep focus visible as a 3 px aqua outline, for wet one-handed use.",
+      "Do read colours from the `:root` custom properties in any new canvas (`getPropertyValue`) so the stylesheet stays the single source of ink.",
+      "Do ship only the owner's photographs and the model's own overlays as rasters; keep the greyscale-multiply treatment when a photo must sit in the world."
+    ],
+    "donts": [
+      "Don't paint overprint green as a decorative fill; it is produced by overlap, and typed with `--over` only to say \"good\".",
+      "Don't add a fourth colour for state (no red error, no yellow warning, no grey disabled); warn is sun-text, bad is ink, quiet is hairline.",
+      "Don't use shadows, gradients, blurs, or a dark theme; the deck has no dark mode and the print has no depth.",
+      "Don't use grey for secondary text; use the ink tint (`ink-2`) on paper.",
+      "Don't add motion beyond the 600 ms meter grow and the 160 ms screen fade-rise; nothing else moves, and reduced motion removes both.",
+      "Don't introduce icon fonts, glyph icons or a component library; icons are inline SVG at 2.2 stroke in `currentColor`, and there are four of them.",
+      "Don't round beyond 3 px on anything but the level stamp; meters, bars and rules stay square."
+    ]
+  }
+}

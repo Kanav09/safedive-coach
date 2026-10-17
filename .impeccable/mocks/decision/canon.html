@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<title>SafeDive Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:390px;height:844px;overflow:hidden;background:#ffffff;color:#111827;font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  .screen{position:relative;width:390px;height:844px;display:flex;flex-direction:column}
+  .topbar{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #f3f4f6}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;letter-spacing:-.01em}
+  .brand .dot{width:24px;height:24px;border-radius:8px;background:#2563eb}
+  .pill{font-size:12px;font-weight:600;color:#2563eb;background:#eff6ff;border-radius:999px;padding:5px 10px;line-height:1}
+  .content{flex:1;padding:16px 16px 0}
+  .photo{height:140px;border-radius:12px;background:#dbeafe;display:flex;align-items:flex-end;padding:12px;margin-bottom:16px;box-shadow:0 1px 2px rgba(17,24,39,.04)}
+  .photo .tag{font-size:12px;font-weight:500;color:#1e40af;background:rgba(255,255,255,.85);border-radius:8px;padding:4px 8px;line-height:1}
+  h1{font-size:28px;line-height:1.15;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+  .sub{font-size:15px;line-height:1.45;color:#4b5563;margin-bottom:16px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+  .stat{background:#f3f4f6;border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(17,24,39,.03)}
+  .stat .num{font-size:24px;font-weight:700;line-height:1;letter-spacing:-.02em;margin-bottom:6px}
+  .stat .lbl{font-size:12px;color:#6b7280;line-height:1.2}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:6px}
+  .input{height:44px;border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:15px}
+  .input.placeholder{color:#9ca3af}
+  .chev{width:8px;height:8px;border-right:2px solid #6b7280;border-bottom:2px solid #6b7280;transform:rotate(45deg);margin-top:-4px}
+  .btn{display:flex;align-items:center;justify-content:center;height:50px;border-radius:12px;font-size:16px;font-weight:600;width:100%}
+  .btn.primary{background:#2563eb;color:#ffffff;box-shadow:0 2px 6px rgba(37,99,235,.25);margin-top:4px}
+  .btn.secondary{background:#ffffff;color:#2563eb;border:1.5px solid #2563eb;margin-top:10px}
+  .fine{font-size:12px;color:#6b7280;text-align:center;line-height:1.4;margin-top:12px}
+  .tabbar{height:76px;border-top:1px solid #e5e7eb;background:#ffffff;display:grid;grid-template-columns:repeat(4,1fr);padding:10px 8px 18px}
+  .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:11px;font-weight:500;color:#6b7280}
+  .tab.active{color:#2563eb}
+  .ic{width:22px;height:22px;position:relative}
+  .ic-score{border:2px solid currentColor;border-radius:50%}
+  .ic-score::after{content:"";position:absolute;left:5px;top:5px;width:8px;height:8px;border-radius:50%;background:currentColor}
+  .ic-learn{border:2px solid currentColor;border-radius:3px}
+  .ic-learn::after{content:"";position:absolute;left:4px;right:4px;top:5px;height:2px;background:currentColor;box-shadow:0 5px 0 currentColor}
+  .ic-progress{border-bottom:2px solid currentColor;border-left:2px solid currentColor}
+  .ic-progress::before,.ic-progress::after{content:"";position:absolute;bottom:0;width:4px;background:currentColor}
+  .ic-progress::before{left:4px;height:8px}
+  .ic-progress::after{left:11px;height:14px;box-shadow:7px 4px 0 currentColor}
+  .ic-about{border:2px solid currentColor;border-radius:50%}
+  .ic-about::after{content:"";position:absolute;left:8px;top:8px;width:2px;height:7px;background:currentColor;box-shadow:0 -5px 0 currentColor}
+</style>
+</head>
+<body>
+<div class="screen">
+  <header class="topbar">
+    <div class="brand"><span class="dot"></span>SafeDive Coach</div>
+    <span class="pill">Minnow</span>
+  </header>
+
+  <main class="content">
+    <div class="photo" aria-label="Lap photo"><span class="tag">Lap photo</span></div>
+
+    <h1>Film one lap. Fix one thing.</h1>
+    <p class="sub">The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</p>
+
+    <div class="stats">
+      <div class="stat"><div class="num">3</div><div class="lbl">laps scored</div></div>
+      <div class="stat"><div class="num">1</div><div class="lbl">week streak</div></div>
+      <div class="stat"><div class="num">50</div><div class="lbl">best score</div></div>
+    </div>
+
+    <div class="field">
+      <label>Swimmer's name</label>
+      <div class="input placeholder">Maya</div>
+    </div>
+    <div class="field">
+      <label>Stroke</label>
+      <div class="input"><span>Backstroke</span><span class="chev"></span></div>
+    </div>
+
+    <div class="btn primary">Record or choose a video</div>
+    <div class="btn secondary">See what the app sees</div>
+
+    <p class="fine">This is a swim-form helper, not a safety device.</p>
+  </main>
+
+  <nav class="tabbar">
+    <div class="tab active"><span class="ic ic-score"></span>Score</div>
+    <div class="tab"><span class="ic ic-learn"></span>Learn</div>
+    <div class="tab"><span class="ic ic-progress"></span>Progress</div>
+    <div class="tab"><span class="ic ic-about"></span>About</div>
+  </nav>
+</div>
+</body>
+</html>

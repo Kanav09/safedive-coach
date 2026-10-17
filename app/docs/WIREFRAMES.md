@@ -1,6 +1,6 @@
 # SafeDive Coach: wireframes (as built, phone width)
 
-Boxes are 390 px wide (iPhone 15). Bottom tab bar is 64 px on every screen. Fonts: condensed display face for numbers and headings, system sans for text. Minimum tap target 44 px. All colours meet 4.5:1 on their background in light and dark mode.
+Boxes are 390 px wide (iPhone 15). Bottom tab bar is 72 px on every screen. Minimum tap target 44 px. *Visual note (2026-10-17): the look was redesigned after these wireframes were drawn. Layout and screen order below still hold; for type, colour and the overprint meters see `DESIGN.md` at the repository root. The app is light-only now.*
 
 ## Consent sheet (first run)
 ```
@@ -133,4 +133,4 @@ Alternative B: video playback with overlay instead of a scrubber. Pro: feels liv
 │ Credits, version                     │
 ```
 
-Accessibility notes: every canvas has an `aria-label`; charts are supplemented by text (the readout line, the detail card); the range input is keyboard-operable; dark mode follows the system and keeps the same contrast; nothing depends on colour alone (score band also has a word, tips have a left edge *and* a drill button).
+Accessibility notes: every canvas has an `aria-label`; charts are supplemented by text (the readout line, the detail card); the range input is keyboard-operable; nothing depends on colour alone (score band also has a word, tips have a border *and* a drill button).
