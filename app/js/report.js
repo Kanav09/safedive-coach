@@ -5,12 +5,12 @@ const APP_VERSION = '0.4.0';
 
 function resultToJSON(run, sampleFps) {
   const { summary, result, perFrame, times, stroke, swimmer } = run;
-  const moving = markMoving(perFrame, sampleFps);
+  const moving = scoredMask(perFrame, sampleFps);
   return {
     app: 'SafeDive Coach', version: APP_VERSION, created: new Date().toISOString(),
     swimmer: swimmer || null, stroke,
-    clip: { seconds: +summary.seconds.toFixed(2), framesAnalysed: summary.frames, sampleFps },
-    readability: { readableFrac: +summary.readableFrac.toFixed(3), movingFrac: +summary.movingFrac.toFixed(3), scoredSeconds: +(summary.scoredFrames / sampleFps).toFixed(2) },
+    clip: { seconds: +summary.seconds.toFixed(2), framesAnalysed: summary.frames, sampleFps, model: run.model || 'fast' },
+    readability: { readableFrac: +summary.readableFrac.toFixed(3), movingFrac: +summary.movingFrac.toFixed(3), uprightFrac: +(summary.uprightFrac || 0).toFixed(3), scoredSeconds: +(summary.scoredFrames / sampleFps).toFixed(2) },
     metrics: {
       torsoAngleDeg: summary.torsoAngle === null ? null : +summary.torsoAngle.toFixed(1),
       headLift: summary.headLift === null ? null : +summary.headLift.toFixed(3),

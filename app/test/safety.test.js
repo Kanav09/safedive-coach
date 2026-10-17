@@ -9,7 +9,8 @@ let r = floatTest(rep(T, 70 * fps), fps); assert.ok(r.pass && r.seconds >= 70 &&
 r = floatTest(rep(F, 30 * fps), fps); assert.ok(!r.pass && Math.abs(r.seconds - 30) < 0.2 && r.mode === 'float');
 r = floatTest([...rep(F, 40 * fps), ...rep(null, 1 * fps), ...rep(F, 25 * fps)], fps); assert.ok(r.pass, 'a one-second gap is bridged: ' + r.seconds);
 r = floatTest([...rep(F, 40 * fps), ...rep(null, 5 * fps), ...rep(F, 25 * fps)], fps); assert.ok(!r.pass && r.seconds < 41, 'a five-second gap breaks the run: ' + r.seconds);
-r = floatTest([...rep(F, 20 * fps), ...rep(B, 4 * fps), ...rep(F, 20 * fps)], fps); assert.ok(!r.pass, 'a body between flat and upright for 4 s is not holding');
+r = floatTest([...rep(F, 20 * fps), ...rep(B, 4 * fps), ...rep(F, 20 * fps)], fps); assert.ok(!r.pass && r.seconds >= 44, 'a leaning tread still counts as at the surface: ' + r.seconds);
+r = floatTest(rep(B, 65 * fps), fps); assert.ok(r.pass && r.mode === null, 'a whole minute leaning back passes; posture undecided');
 r = floatTest(rep(null, 10 * fps), fps); assert.strictEqual(r.seconds, 0); assert.strictEqual(r.mode, null);
 r = floatTest(rep(T, 35 * fps), fps, 30); assert.ok(r.pass && r.minSeconds === 30, 'shorter target for the practice run');
 assert.strictEqual(skillsDone({ enter: {}, exit: {} }), 2); assert.strictEqual(skillsDone(null), 0);

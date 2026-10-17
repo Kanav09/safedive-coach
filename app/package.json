@@ -5,7 +5,7 @@
   "description": "Film your kid swimming; the app reads body position and says what to fix.",
   "scripts": {
     "start": "node tools/serve.js 8765",
-    "test": "node test/metrics.test.js && node test/scoring.test.js && node test/report.test.js && node test/drills.test.js && node test/store.test.js && node test/badges.test.js && node test/safety.test.js && node test/plan.test.js && node test/share.test.js && node test/live.test.js"
+    "test": "node test/metrics.test.js && node test/scoring.test.js && node test/report.test.js && node test/drills.test.js && node test/store.test.js && node test/badges.test.js && node test/safety.test.js && node test/plan.test.js && node test/share.test.js && node test/live.test.js && node test/track.test.js"
   },
   "dependencies": {
     "onnxruntime-web": "^1.20.1"

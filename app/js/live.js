@@ -46,7 +46,7 @@ if (typeof window !== 'undefined') {
       await new Promise(r => { this.video.onloadedmetadata = r; });
       await this.video.play();
       this.canvas.width = this.video.videoWidth; this.canvas.height = this.video.videoHeight;
-      this.running = true; this.smoothed = null; this.lastState = null; this.t0 = performance.now();
+      this.running = true; this.smoothed = null; this.lastState = null; this.t0 = performance.now(); this.followed = null; this.history = [];
       this.hold = mode === 'coach' ? null : new HoldCounter(mode);
       this.loop(det);
     }
@@ -62,14 +62,16 @@ if (typeof window !== 'undefined') {
         if (!this.running) break;
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         let m = null;
-        if (poses.length) { m = this.frameMetrics(poses[0].keypoints); this.drawSkeleton(ctx, poses[0].keypoints, { target: m && m.torsoAngle > LIVE.flat ? LIVE.flat : null }); }
+        this.followed = this.pickSwimmer(poses, this.followed, this.track.maxJump);
+        if (this.followed) { this.history.push(this.followed.keypoints); if (this.history.length > this.track.smoothWin) this.history.shift(); } else this.history = [];
+        if (this.followed) { const kps = this.smoothKeypoints(this.history, this.track.smoothWin); m = this.frameMetrics(kps); this.drawSkeleton(ctx, kps, { target: m && m.torsoAngle > LIVE.flat ? LIVE.flat : null }); }
         if (m) this.smoothed = this.smoothed === null ? m.torsoAngle : this.smoothed + LIVE.smooth * (m.torsoAngle - this.smoothed);
         const state = liveState(m ? { torsoAngle: this.smoothed } : null, poses.length > 0);
         const now = (performance.now() - this.t0) / 1000;
         let held = null, done = false;
         if (this.hold) {
           const fs = this.floatState(m ? { torsoAngle: this.smoothed } : null);
-          held = this.hold.push(this.mode === 'surface' ? (fs === 'float' || fs === 'tread') : fs === this.mode, now);
+          held = this.hold.push(this.mode === 'surface' ? fs !== null : fs === this.mode, now);   // any readable posture is 'at the surface'
           if (held >= this.target) done = true;
         }
         this.say(state);

@@ -5,13 +5,18 @@
 //   plan.js (one-week plan + calendar), share.js (a lap as a link), live.js (camera, dial, cues)
 
 const $ = id => document.getElementById(id);
-const POSE_MODEL = 'models/yolo/yolo11n-pose.onnx', POSE_INPUT = 640;
+// Two pose models, same code path (js/pose_yolo.js). 'fast' ships with the app and runs the live coach. 'careful' is the
+// bigger YOLO11s-pose: in the 87-clip study it read 16 of 41 swimming clips more than 5 points better and treading water
+// much better, at twice the time (feasibility/v04/RESULTS.md). It is fetched once, on demand, when a parent asks for it.
+const POSE_MODELS = { fast: { url: 'models/yolo/yolo11n-pose.onnx', label: 'fast model', mb: 12 }, careful: { url: 'models/yolo/yolo11s-pose.onnx', label: 'careful model', mb: 40 } };
+const POSE_INPUT = 640;
 const MAX_SECONDS = 30;                       // longest stretch of a lap clip we analyse
 const FLOAT_MAX_SECONDS = 95;                 // the float test needs a full minute plus slack
 const store = makeStore();
 store.migrate();
 
-let detector = null, detectorLoading = null;
+const detectors = {}, detectorLoading = {};     // one loaded YoloPose per model key
+let detector = null;                             // the fast one, once loaded (the examples screen and the hero use it)
 let cancelFlag = false;
 let lastRun = null;                           // the most recent analysed lap (see analyze())
 let scratch = null;                           // offscreen canvas for reading pixels
@@ -119,16 +124,18 @@ function makePlanFrom(issueKey, swimmerId) {
 function downloadText(text, name, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
 
 // ---------- pose model ----------
-async function getDetector(note = () => {}) {
-  if (detector) return detector;
-  if (!detectorLoading) {
-    note('Loading the pose model (first time only, about 12 MB)…');
+async function getDetector(note = () => {}, which = 'fast') {
+  if (detectors[which]) return detectors[which];
+  if (!detectorLoading[which]) {
+    const m = POSE_MODELS[which];
+    note(`Loading the ${m.label} (first time only, about ${m.mb} MB)…`);
     ort.env.wasm.wasmPaths = new URL('vendor/ort/', location.href).href;    // absolute: ort imports its .mjs/.wasm from here
     ort.env.wasm.numThreads = Math.min(4, navigator.hardwareConcurrency || 2); // only takes effect when the page is cross-origin isolated
-    detectorLoading = new YoloPose(ort, POSE_MODEL, POSE_INPUT).load().then(d => (detector = d));
+    detectorLoading[which] = new YoloPose(ort, m.url, POSE_INPUT).load().then(d => { detectors[which] = d; if (which === 'fast') detector = d; return d; });
   }
-  return detectorLoading;
+  return detectorLoading[which];
 }
+function chosenModel() { return store.settings().carefulModel ? 'careful' : 'fast'; }
 // Pixel reader for anything drawable (video, img, canvas): draws it at the model's size and returns RGBA bytes.
 function pixelsFrom(source) {
   return (nw, nh) => {
@@ -200,7 +207,7 @@ function seekTo(video, t) {
 function fmtEta(sec) { return sec < 1 ? 'almost' : sec < 60 ? `${Math.round(sec)} s` : `${Math.ceil(sec / 60)} min`; }
 
 // mode 'lap' scores a lap (scoring.js); mode 'float' times the swimmer at the surface for the safety minute (safety.js)
-async function analyze(src, stroke, swimmer, mode = 'lap') {
+async function analyze(src, stroke, swimmer, mode = 'lap', which = chosenModel()) {
   cancelFlag = false;
   show('analyze');
   $('analyzeTitle').textContent = mode === 'float' ? 'Timing the float' : 'Reading the swimmer';
@@ -209,7 +216,7 @@ async function analyze(src, stroke, swimmer, mode = 'lap') {
   $('analyzeStage').classList.add('loading');
   $('bar').style.width = '0%'; $('progressBar').setAttribute('aria-valuenow', 0); $('readNow').textContent = '–'; $('readFrac').textContent = '0%'; $('readEta').textContent = '…';
   drawReadabilityStrip($('strip'), [], null, 1);
-  const det = await getDetector(note);
+  const det = await getDetector(note, which);
 
   note('Opening the video…');
   video.src = src;
@@ -229,9 +236,9 @@ async function analyze(src, stroke, swimmer, mode = 'lap') {
   const fps = mode === 'float' ? 4 : (warmMs > 450 ? 4 : 8);
   const total = Math.floor(duration * fps);
   const perFrame = [], keypoints = [], times = [];
-  let best = null, spent = 0;
+  let best = null, spent = 0, followed = null, history = [];      // the swimmer we follow and their recent keypoints (js/track.js)
 
-  note(`Reading the swimmer, ${fps} frames a second…`);
+  note(`Reading the swimmer with the ${POSE_MODELS[which].label}, ${fps} frames a second…`);
   for (let i = 0; i < total; i++) {
     if (cancelFlag) return null;
     const t = i / fps;
@@ -241,8 +248,10 @@ async function analyze(src, stroke, swimmer, mode = 'lap') {
     spent += performance.now() - t0;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     let m = null, kps = null;
-    if (poses.length) {
-      kps = poses[0].keypoints; m = frameMetrics(kps);
+    followed = pickSwimmer(poses, followed, TRACK.maxJump);
+    if (followed) { history.push(followed.keypoints); if (history.length > TRACK.smoothWin) history.shift(); } else history = [];
+    if (followed) {
+      kps = smoothKeypoints(history, TRACK.smoothWin); m = frameMetrics(kps);
       drawSkeleton(ctx, kps); drawLabel(ctx, m ? `body ${m.torsoAngle.toFixed(0)}° from flat` : 'torso not readable');
       const conf = kps.reduce((a, k) => a + k.score, 0);
       if (m && (!best || conf > best.conf)) {
@@ -263,8 +272,8 @@ async function analyze(src, stroke, swimmer, mode = 'lap') {
 
   const summary = clipSummary(perFrame, fps);
   const result = scoreClip(summary, stroke, fps);
-  const moving = markMoving(perFrame, fps);
-  lastRun = { summary, result, perFrame, keypoints, times, moving, best, stroke, swimmer: swimmer ? swimmer.name : '', swimmerId: swimmer ? swimmer.id : null, src, fps, date: new Date().toISOString(), sessionId: null };
+  const moving = scoredMask(perFrame, fps);           // travelling AND not upright: exactly the frames the score used
+  lastRun = { summary, result, perFrame, keypoints, times, moving, best, stroke, swimmer: swimmer ? swimmer.name : '', swimmerId: swimmer ? swimmer.id : null, src, fps, model: which, swimmerObj: swimmer, mode, date: new Date().toISOString(), sessionId: null };
   if (result.ok) {
     const parts = {}; result.parts.forEach(p => { parts[p.key] = p.pts; });
     withBadges(lastRun.swimmerId, () => {
@@ -286,12 +295,14 @@ function renderResults() {
   $('sharedBanner').hidden = !shared; $('resStageWrap').hidden = !!shared;
   $('btnSaveCard').hidden = !!shared; $('btnCopyJson').hidden = !!shared; $('btnShareLink').hidden = !!shared; $('shareBox').hidden = true; $('btnMakePlan').hidden = !!shared;
   $('btnAgain').textContent = shared ? 'Score your own lap' : 'Score another lap';
-  $('resHeader').textContent = `${swimmer ? swimmer + ' · ' : ''}${STROKES[stroke] || stroke} · ${new Date(lastRun.date).toLocaleDateString()}`;
+  $('resHeader').textContent = `${swimmer ? swimmer + ' · ' : ''}${STROKES[stroke] || stroke} · ${new Date(lastRun.date).toLocaleDateString()}${lastRun.model === 'careful' ? ' · careful model' : ''}`;
   const scoreEl = $('resScore'), refuse = $('resRefuse'), parts = $('resParts'), tips = $('resTips');
   if (!result.ok) {
     scoreEl.hidden = true; parts.innerHTML = ''; tips.innerHTML = '';
     refuse.hidden = false;
-    refuse.innerHTML = `<b>Not scored.</b> ${esc(result.reason)}<br><span class="fine">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames, travelling in ${Math.round(summary.movingFrac * 100)}%. The app refuses to guess rather than give a number it cannot stand behind. <a href="#" data-go="guide">How to film</a>.</span>`;
+    const canRetry = !shared && lastRun.model === 'fast' && lastRun.src && summary.readableFrac < THRESHOLDS.minReadable;
+    refuse.innerHTML = `<b>Not scored.</b> ${esc(result.reason)}<br><span class="fine">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames, travelling in ${Math.round(summary.movingFrac * 100)}%. The app refuses to guess rather than give a number it cannot stand behind. <a href="#" data-go="guide">How to film</a>.</span>${canRetry ? `<button id="btnRetryCareful" class="btn secondary sm" type="button">Read it again with the careful model (slower, ${POSE_MODELS.careful.mb} MB once)</button>` : ''}`;
+    if (canRetry) $('btnRetryCareful').onclick = () => analyze(lastRun.src, lastRun.stroke, lastRun.swimmerObj, lastRun.mode, 'careful').catch(err => { console.error('SafeDive', err); showError(err.message); });
     $('btnMakePlan').hidden = true;
   } else {
     refuse.hidden = true; scoreEl.hidden = false; $('btnMakePlan').hidden = !!shared;
@@ -365,7 +376,7 @@ async function shareLink() {
 
 // ---------- live coach ----------
 function setupLive() {
-  live = new LiveCoach({ video: $('liveVideo'), canvas: $('liveOverlay'), getDetector: () => getDetector(t => { $('liveCue').textContent = t; }), pixelsFrom, frameMetrics, drawSkeleton, floatState });
+  live = new LiveCoach({ video: $('liveVideo'), canvas: $('liveOverlay'), getDetector: () => getDetector(t => { $('liveCue').textContent = t; }), pixelsFrom, frameMetrics, drawSkeleton, floatState, pickSwimmer, smoothKeypoints, track: TRACK });
   live.voice = !!store.settings().voice; $('voiceToggle').checked = live.voice;
 }
 function prepareLive(test) {
@@ -514,6 +525,7 @@ function renderSettings() {
   $('swimmerManage').innerHTML = sw.map(x => `<div class="hist"><div>${esc(x.name)} <span>${store.sessionsFor(x.id).length} laps · ${skillsDone(store.skillsFor(x.id))} skills</span></div><button class="btn ghost sm" type="button" data-remove="${x.id}">Remove</button></div>`).join('');
   $('swimmerManage').querySelectorAll('[data-remove]').forEach(b => b.onclick = () => { const x = store.swimmer(b.dataset.remove); if (x && confirm(`Remove ${x.name} and all their laps and skills from this device?`)) { store.removeSwimmer(x.id); renderSettings(); renderSwimmerRows(); toast(`${x.name} removed`); } });
   $('versionTag').textContent = APP_VERSION;
+  $('carefulToggle').checked = !!store.settings().carefulModel;
 }
 
 // ---------- install (PWA) ----------
@@ -585,6 +597,7 @@ window.addEventListener('DOMContentLoaded', () => {
   $('btnLiveStart').onclick = startLive;
   $('btnLiveStop').onclick = () => { const r = stopLive(); if (liveTest && r) finishFloat(r, 'camera', activeSwimmer()); };
   $('voiceToggle').onchange = e => { live.voice = e.target.checked; store.setSetting('voice', e.target.checked); };
+  $('carefulToggle').onchange = e => { store.setSetting('carefulModel', e.target.checked); toast(e.target.checked ? 'Laps will use the careful model.' : 'Laps will use the fast model.'); };
   $('btnFloatAgain').onclick = () => show('live', { test: { seconds: FLOAT.minSeconds } });
   document.addEventListener('visibilitychange', () => { if (document.hidden && live && live.running) stopLive(); });
 

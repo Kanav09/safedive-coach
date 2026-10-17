@@ -1,12 +1,32 @@
 // SafeDive Coach: turns a clip summary (from metrics.js) into a score and plain-English coaching.
-// Thresholds are STARTING POINTS tuned on one pool's footage. Change them in one place: THRESHOLDS.
+// Every threshold lives here. Where a number comes from a paper it says so; where it is our own calibration it says
+// that too. The full evidence file is feasibility/v04/LITERATURE.md.
+//
+// Body line. True trunk incline while swimming is 10–15° for adults at normal speeds (Zamparo et al. 2009, Eur J Appl
+// Physiol 106:195), 10–12° for front crawl and backstroke alike (Gonjo et al. 2023, Sports Biomech 22:1590), and
+// 2–14° for 8–13-year-old novices (Jerszyński et al. 2013, J Hum Kinet 37:161). Kick-only drills reach 16–21°.
+// The app does not see the true angle: a phone on the deck looks DOWN at the swimmer, which adds elevation to the
+// angle in the picture. Our own clearly-flat clips read 11–32° in the image (feasibility/v04). So the bands below are
+// image-plane bands, set about 10° above the literature: great <= 15°, ok <= 30°, and the score reaches 0 at 60°.
+// Expect about ±5° of measurement error on a 2D segment angle (gait validations, Cheng et al. 2025); none exists in water.
+//
+// Head position. Coaching cues are qualitative: water between eyebrows and hairline in front crawl, water covering
+// the ears with eyes up in backstroke (Swim England 2019; US Masters Swimming 2012, 2022). No paper defines a
+// nose-to-shoulder ratio, so the ranges below are our proxy for those cues and are labelled as such in the app.
+//
+// Rhythm. The app counts EACH ARM (one wrist up-and-down), so per-arm Hz is twice the cycle rate in the papers.
+// Children swim at higher stroke rates than adults: 0.58 cycles/s at 1.0 m/s for 11–12-year-olds (Kjendlie et al. 2004,
+// Eur J Appl Physiol 91:649) and 31–38 cycles/min at 0.9–1.1 m/s for 12-year-olds (Poujade et al. 2002, 87:1), which is
+// 1.0–1.3 Hz per arm; backstroke at 11–13 y reaches 38–43 cycles/min (Silva et al. 2013), 1.3–1.4 Hz per arm.
+// Breaststroke adults 32–43 cycles/min (0.54–0.89 Hz); flutter kick all-out 2.4 Hz (Ng et al. 2019). No child data for those.
 
 const THRESHOLDS = {
-  minReadable: 0.30,     // below this share of readable frames we refuse to score
+  minReadable: 0.30,     // below this share of readable frames we refuse to score (our calibration, 87-clip study)
   minScoredSeconds: 1.0, // need at least this much travelling, readable swimming
-  bodyLine: { great: 15, ok: 30 },          // torso angle in degrees (0 = flat)
-  headLift: { freestyle: [-0.1, 0.35], backstroke: [0.0, 0.5], kick: [-0.1, 0.4], breaststroke: [-0.1, 0.6] },
-  strokeHz: { freestyle: [0.5, 1.3], backstroke: [0.5, 1.2], breaststroke: [0.3, 0.9], kick: [0.3, 3.0] },
+  bodyLine: { great: 15, ok: 30 },          // image-plane torso angle in degrees (0 = flat); see the note above
+  headLift: { freestyle: [-0.1, 0.35], backstroke: [0.0, 0.5], kick: [-0.1, 0.4], breaststroke: [-0.1, 0.6] },   // unvalidated proxy
+  strokeHz: { freestyle: [0.5, 1.5], backstroke: [0.5, 1.5], breaststroke: [0.3, 0.9], kick: [0.3, 3.0] },     // per arm; ceilings from the child data above
+  errorDeg: 5,           // the error bar the app shows next to a body-line reading
 };
 
 const STROKES = {
@@ -25,6 +45,7 @@ function scoreClip(summary, stroke, fps) {
     return { ok: false, reason: `I could only see the swimmer's body in ${Math.round(summary.readableFrac * 100)}% of the video. Film from the side at waist height, closer, with less splash, and try again.` };
   }
   if (summary.scoredFrames / fps < T.minScoredSeconds) {
+    if ((summary.uprightFrac || 0) > 0.5 * summary.readableFrac) return { ok: false, reason: 'Most of the time I could see the swimmer, the body read as upright: standing, treading water, at the wall, or filmed from the end of the pool or from above, where a flat swimmer looks vertical. That is not a lap I can score. Film from the side while they travel across the pool.' };
     return { ok: false, reason: 'I did not see enough actual swimming. Start recording after the push-off and stop before the wall, so the clip is the swimmer travelling, not standing.' };
   }
 
@@ -39,7 +60,7 @@ function scoreClip(summary, stroke, fps) {
   if (a <= T.bodyLine.great) bodyPts = 50;
   else if (a <= T.bodyLine.ok) bodyPts = 50 - 25 * (a - T.bodyLine.great) / (T.bodyLine.ok - T.bodyLine.great);
   else bodyPts = clamp(25 - 25 * (a - T.bodyLine.ok) / 30, 0, 25);
-  parts.push({ key: 'body', name: 'Body line', pts: Math.round(bodyPts), max: 50, value: `${a.toFixed(0)} degrees from flat` });
+  parts.push({ key: 'body', name: 'Body line', pts: Math.round(bodyPts), max: 50, value: `${a.toFixed(0)}° from flat, give or take ${T.errorDeg}°` });
   if (a > T.bodyLine.ok) say('hips_low', 'Hips are sinking. Press the chest down and look at the bottom of the pool so the hips float up. Try kicking from the hips, not the knees.');
   else if (a > T.bodyLine.great) say('hips_slightly_low', 'Body line is a little low. Keep the kick going steadily so the legs stay near the surface.');
   else say('body_flat', 'Body line is flat. Nice.');

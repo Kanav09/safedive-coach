@@ -11,9 +11,14 @@ const SKILLS = [
   { key: 'exit', name: 'Climb out without a ladder', text: 'Pull themselves out over the side of the pool.', how: 'parent' },
 ];
 
+// The skill is 'stay at the surface for a minute, floating or treading'. What the camera can honestly check is that the
+// swimmer's torso stays readable at the surface, continuously; the angle only says HOW they stayed up (flat = floating,
+// upright = treading, in between = a leaning tread, which still counts: a third of one real treading clip sits there).
+// A 2 s gap is forgiven because a splash hides the hips for a moment.
 const FLOAT = { minSeconds: 60, flatMax: 35, uprightMin: 55, maxGapSeconds: 2.0 };
 
-// Per-frame verdict for the test: 'float' (body near flat), 'tread' (body upright), 'between', or null (nobody readable).
+// Per-frame posture for the test: 'float' (body near flat), 'tread' (body upright), 'between', or null (nobody readable).
+// All three non-null postures count as being at the surface.
 function floatState(m) {
   if (!m) return null;
   if (m.torsoAngle <= FLOAT.flatMax) return 'float';
@@ -28,14 +33,14 @@ function floatTest(perFrame, fps, minSeconds = FLOAT.minSeconds) {
   let longest = 0, run = 0, gap = 0, mode = null, modes = { float: 0, tread: 0 };
   for (const m of perFrame) {
     const st = floatState(m);
-    if (st === 'float' || st === 'tread') { run += 1 + gap; gap = 0; modes[st]++; }
+    if (st) { run += 1 + gap; gap = 0; if (st !== 'between') modes[st]++; }
     else if (run > 0 && gap < FLOAT.maxGapSeconds * fps) gap++;
     else { run = 0; gap = 0; }
     if (run > longest) longest = run;
   }
   const seconds = longest / fps;
   const readable = perFrame.filter(Boolean).length / Math.max(perFrame.length, 1);
-  if (modes.float || modes.tread) mode = modes.float >= modes.tread ? 'float' : 'tread';
+  if (modes.float || modes.tread) mode = modes.float >= modes.tread ? 'float' : 'tread';   // 'between' frames count for time but do not vote
   return { seconds: +seconds.toFixed(1), pass: seconds >= minSeconds, readableFrac: +readable.toFixed(3), mode, minSeconds };
 }
 

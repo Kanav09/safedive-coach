@@ -25,6 +25,12 @@ What is in the app (v0.4), behind five tabs:
 It installs to the home screen and works offline (the service worker caches the model). Product documents
 (brief, spec, flows, wireframes, schema, privacy, handoff, usability plan) are in `docs/`.
 
+Why trust the number: the scoring rules were checked against an 87-clip study and the swimming-biomechanics
+literature (`../feasibility/v04/RESULTS.md`, `LITERATURE.md`, `DATASETS.md`). The app follows one swimmer,
+smooths the keypoints, never scores upright frames, quotes a ±5° error bar, and refuses rather than guesses.
+Two pose models ship: the fast YOLO11n (12 MB, the default and the live coach) and the careful YOLO11s (40 MB,
+fetched on demand), which reads hard clips and treading water better at twice the time; a refused lap offers it.
+
 ## Run it
 
 ```

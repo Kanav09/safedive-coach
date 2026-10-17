@@ -6,6 +6,8 @@ const fs = require('fs'), path = require('path');
 const { YoloPose } = require('../js/pose_yolo.js');
 const { frameMetrics, clipSummary } = require('../js/metrics.js');
 const { scoreClip } = require('../js/scoring.js');
+const { TRACK, pickSwimmer, smoothKeypoints } = require('../js/track.js');
+const FOLLOW = process.env.FOLLOW !== '0', SMOOTH = process.env.SMOOTH ? Number(process.env.SMOOTH) : TRACK.smoothWin;
 ort.env.wasm.numThreads = 1;
 
 // Node has no canvas: nearest-neighbour resize of an RGB frame into RGBA, same contract as the browser getPixels.
@@ -30,11 +32,13 @@ function makeGetPixels(rgb, w, h) {
   for (const name of names) {
     const meta = JSON.parse(fs.readFileSync(path.join(dir, name + '.json')));
     const raw = fs.readFileSync(path.join(dir, name + '.rgb'));
-    const fb = meta.h * meta.w * 3; const perFrame = []; const t0 = Date.now(); let seen = 0;
+    const fb = meta.h * meta.w * 3; const perFrame = []; const t0 = Date.now(); let seen = 0, followed = null, history = [];
     for (let i = 0; i < meta.n; i++) {
       const people = await pose.run(meta.w, meta.h, makeGetPixels(raw.subarray(i * fb, (i + 1) * fb), meta.w, meta.h));
       if (people.length) seen++;
-      perFrame.push(people.length ? frameMetrics(people[0].keypoints) : null);
+      followed = FOLLOW ? pickSwimmer(people, followed, TRACK.maxJump) : (people.length ? people.reduce((a, p) => (p.score > a.score ? p : a), people[0]) : null);
+      if (followed) { history.push(followed.keypoints); if (history.length > SMOOTH) history.shift(); } else history = [];
+      perFrame.push(followed ? frameMetrics(smoothKeypoints(history, SMOOTH)) : null);
     }
     const ms = (Date.now() - t0) / meta.n;
     const summary = clipSummary(perFrame, meta.fps);

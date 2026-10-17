@@ -11,10 +11,11 @@
   "created": "2026-10-14T18:05:12.345Z",       // ISO 8601, when the record was made
   "swimmer": "Maya",                            // string or null
   "stroke": "backstroke",                       // backstroke | kick | freestyle | breaststroke (chosen by the parent, not detected)
-  "clip": { "seconds": 12.5, "framesAnalysed": 100, "sampleFps": 8 },   // up to 30 s, 8 or 4 fps depending on device speed
+  "clip": { "seconds": 12.5, "framesAnalysed": 100, "sampleFps": 8, "model": "fast" },   // up to 30 s, 8 or 4 fps depending on device speed; model "fast" (YOLO11n) or "careful" (YOLO11s)
   "readability": {
     "readableFrac": 0.62,                       // frames with both shoulders and both hips above confidence 0.4
-    "movingFrac": 0.48,                         // readable frames where the shoulders travel >= 0.35 torso-lengths/s
+    "movingFrac": 0.48,                         // frames that were scored: readable, shoulders travelling >= 0.35 torso-lengths/s, body not upright
+    "uprightFrac": 0.10,                        // readable frames with the torso steeper than 60°: standing, treading, at the wall; never scored (v0.4)
     "scoredSeconds": 6.0                        // movingFrac x seconds; the gate needs >= 1.0
   },
   "metrics": {
@@ -64,8 +65,8 @@ The template asked for 3 to 5 clip ranges per issue. The record gives the raw ma
 ## Example (abridged real run, backstroke clip 0389 through the Node harness)
 
 ```json
-{ "stroke": "backstroke", "clip": { "seconds": 4.5, "framesAnalysed": 45, "sampleFps": 10 },
-  "readability": { "readableFrac": 0.33, "movingFrac": 0.22, "scoredSeconds": 1.0 },
+{ "stroke": "backstroke", "clip": { "seconds": 4.5, "framesAnalysed": 45, "sampleFps": 10, "model": "fast" },
+  "readability": { "readableFrac": 0.33, "movingFrac": 0.22, "uprightFrac": 0.05, "scoredSeconds": 1.0 },
   "metrics": { "torsoAngleDeg": 16, "headLift": 0.3, "strokeRateSpm": 48 },
   "score": { "total": 89, "word": "Strong lap" }, "issues": ["hips_slightly_low", "head_ok", "rhythm_ok"], "refused": null }
 ```

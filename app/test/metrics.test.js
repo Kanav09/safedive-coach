@@ -50,3 +50,23 @@ console.log('metrics.test.js: all 12 checks passed');
 const gappy = Array.from({ length: 60 }, (_, i) => (i % 2 ? null : M.frameMetrics(body({ sx: 100 + i * 3 }))));
 assert.ok(M.markMoving(gappy, fps).filter(Boolean).length > 25, 'gappy travelling frames should still be marked moving');
 console.log('gap check passed');
+
+// v0.4: upright frames (standing at the wall, treading) never count toward a lap, and the summary says how many there were
+{
+  const { clipSummary, scoredMask, UPRIGHT_MAX } = require('../js/metrics.js');
+  const flat = i => ({ torsoAngle: 15, hipDrop: 0.2, headLift: 0.2, wristY: 1 + (i % 4) / 4, torsoLen: 50, shX: 20 * i, shY: 100 });
+  const upright = i => ({ torsoAngle: 85, hipDrop: 1, headLift: 0.4, wristY: 2, torsoLen: 50, shX: 20 * i, shY: 100 });
+  const fps = 8;
+  const walking = Array.from({ length: 40 }, (_, i) => upright(i));         // a kid walking along the wall: moving, but upright
+  const s1 = clipSummary(walking, fps);
+  assert.strictEqual(s1.scoredFrames, 0, 'upright frames are never scored even when they travel');
+  assert.ok(s1.uprightFrac > 0.9 && s1.readableFrac > 0.9);
+  const lap = Array.from({ length: 40 }, (_, i) => (i < 8 ? upright(i) : flat(i)));   // push-off from the wall then a flat lap
+  const s2 = clipSummary(lap, fps);
+  assert.ok(s2.scoredFrames >= 28 && s2.torsoAngle === 15, 'the flat travelling stretch is scored and the wall frames are not: ' + s2.scoredFrames);
+  const mask = scoredMask(lap, fps); assert.strictEqual(mask.slice(0, 8).some(Boolean), false); assert.ok(mask.slice(10).every(Boolean));
+  assert.ok(UPRIGHT_MAX >= 55 && UPRIGHT_MAX <= 65);
+  const { scoreClip } = require('../js/scoring.js');
+  const r = scoreClip(s1, 'freestyle', fps); assert.ok(!r.ok && /upright/.test(r.reason), 'refusal names the upright problem: ' + r.reason);
+  console.log('upright rule checks passed');
+}

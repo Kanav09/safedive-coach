@@ -48,15 +48,15 @@
 
 ## ML capabilities
 
-**What the model does.** YOLO11n-pose (Ultralytics, exported to ONNX, 12 MB) finds people and 17 COCO keypoints per frame. onnxruntime-web runs it in WebAssembly, multi-threaded when the page is cross-origin isolated.
+**What the model does.** YOLO11n-pose (Ultralytics, exported to ONNX, 12 MB) finds people and 17 COCO keypoints per frame. onnxruntime-web runs it in WebAssembly, multi-threaded when the page is cross-origin isolated. A second, careful model (YOLO11s-pose, 40 MB, same code path) is fetched on demand: it reads 16 of 41 study clips more than 5 points better and treading water much better, at twice the time, so a lap refused for readability offers it and Settings can make it the default.
 
-**What we compute (metrics.js).** Torso angle from flat (shoulders midpoint to hips midpoint), hip drop, head lift (nose relative to shoulders in torso lengths), wrist height series. Frames count only when both shoulders and both hips are above confidence 0.4. Frames where the shoulders do not travel at least 0.35 torso-lengths per second are dropped. Stroke rate is the dominant frequency of the wrist series between 0.3 and 3 Hz.
+**What we compute (metrics.js, track.js).** The swimmer is followed from frame to frame (nearest to their last position, else the most confident person) and their keypoints are median-smoothed over three samples. Torso angle from flat (shoulders midpoint to hips midpoint), hip drop, head lift (nose relative to shoulders in torso lengths), wrist height series. Frames count only when both shoulders and both hips are above confidence 0.4. Frames where the shoulders do not travel at least 0.35 torso-lengths per second, or where the torso is steeper than 60° (upright: standing, treading, at the wall), are never scored. Stroke rate is the dominant frequency of the wrist series between 0.3 and 3 Hz.
 
 **What we deliberately do not claim.** Stroke type (asked, not detected), roll symmetry (needs a head-on or underwater view), kick rate (feet rarely visible), breathing pattern (needs a face-tracking model). The template's "overall skill score 0 to 100 with beginner/intermediate/advanced category" is replaced by a lap score with a word (Strong lap / Getting there / Work on this), because the data supports judging a lap, not a swimmer.
 
 **Input requirements.** Side-on, phone near water level, 3 to 5 m, landscape, one swimmer, 1080p or 720p at 30 fps. The app samples 8 frames a second (4 on slow devices), up to 30 s.
 
-**Labelled data.** 31 self-filmed clips (16 swimming, 5 treading, 10 acted struggling) with a class label only; no keypoint labels. Used to pick the model, set the readability gate and the angle thresholds. See `feasibility/RESULTS.md` and the Evidence screen.
+**Labelled data.** 87 clips with a class label only (46 swimming, 14 treading, 14 acted struggling, 13 of them from the web), no keypoint labels, plus 31 full-resolution originals. Used to pick the model, set the readability gate, find the upright-frame rule and choose the smoothing. See `feasibility/RESULTS.md` (31-clip study), `feasibility/v04/RESULTS.md` (87-clip study), `feasibility/v04/LITERATURE.md` (published thresholds) and the About screen.
 
 **Outputs.** `docs/ANALYSIS_SCHEMA.md`.
 

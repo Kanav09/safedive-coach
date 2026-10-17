@@ -5,7 +5,11 @@
 // Each keypoint is {x, y, score}. Image y grows downward.
 
 const KP = { NOSE: 0, LSH: 5, RSH: 6, LWR: 9, RWR: 10, LHIP: 11, RHIP: 12, LKN: 13, RKN: 14, LANK: 15, RANK: 16 };
-const KP_THR = 0.4; // a joint counts as seen above this confidence (tuned on the pool clips)
+const KP_THR = 0.4;      // a joint counts as seen above this confidence (87-clip study: 0.3 reads 3 points more but adds standing frames; 0.5 loses a fifth)
+// A torso steeper than this in the picture is a person standing, treading, climbing out or resting at the wall, never a
+// swimming posture: true trunk incline while swimming never exceeds about 21° (Zamparo 2009), 30–35° in a deck-held
+// phone's view. Such frames are counted (so the app can say 'I mostly saw them upright') but never scored as a lap.
+const UPRIGHT_MAX = 60;
 
 function mid(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 function seen(k) { return k && k.score >= KP_THR; }
@@ -76,16 +80,19 @@ function median(arr) {
 }
 
 // Whole clip -> summary the scorer uses. `perFrame` is an array of frameMetrics() results (null allowed).
+// A frame is scored only when the torso is readable, the swimmer is travelling, and the body is not upright.
 function clipSummary(perFrame, fps) {
   const n = perFrame.length;
   const readable = perFrame.filter(Boolean).length;
   const moving = markMoving(perFrame, fps);
-  const scored = perFrame.filter((f, i) => f && moving[i]);
+  const scored = perFrame.filter((f, i) => f && moving[i] && f.torsoAngle <= UPRIGHT_MAX);
+  const upright = perFrame.filter(f => f && f.torsoAngle > UPRIGHT_MAX).length;
   return {
     frames: n,
     seconds: n / fps,
     readableFrac: n ? readable / n : 0,
     movingFrac: n ? scored.length / n : 0,
+    uprightFrac: n ? upright / n : 0,
     torsoAngle: median(scored.map(f => f.torsoAngle)),
     hipDrop: median(scored.map(f => f.hipDrop)),
     headLift: median(scored.map(f => f.headLift)),
@@ -94,4 +101,7 @@ function clipSummary(perFrame, fps) {
   };
 }
 
-if (typeof module !== 'undefined') module.exports = { KP, KP_THR, frameMetrics, markMoving, strokeRate, median, clipSummary };
+// Which frames a results screen should mark as scored: the same rule as clipSummary, exposed so the chart and the summary agree.
+function scoredMask(perFrame, fps) { const moving = markMoving(perFrame, fps); return perFrame.map((f, i) => !!(f && moving[i] && f.torsoAngle <= UPRIGHT_MAX)); }
+
+if (typeof module !== 'undefined') module.exports = { KP, KP_THR, UPRIGHT_MAX, frameMetrics, markMoving, strokeRate, median, clipSummary, scoredMask };

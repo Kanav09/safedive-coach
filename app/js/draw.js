@@ -99,7 +99,7 @@ function drawAngleChart(cv, perFrame, times, moving, cursorIndex) {
   return cssX => { const t = (cssX * k - padL) / (W - padL - padR) * tmax; let best = 0; for (let i = 0; i < times.length; i++) if (Math.abs(times[i] - t) < Math.abs(times[best] - t)) best = i; return best; };
 }
 
-// One tile per analysed frame: green = readable and travelling, orange = readable but still, paper = not readable, blank = not yet.
+// One tile per analysed frame: green = scored (readable, travelling, not upright), orange = readable but not scored, paper = not readable, blank = not yet.
 function drawReadabilityStrip(cv, perFrame, moving, total) {
   const { ctx, W, H, k } = fitCanvas(cv, 14);
   ctx.clearRect(0, 0, W, H);

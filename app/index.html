@@ -159,11 +159,11 @@
     <ul class="bars">
       <li><span>Treading water</span><i style="--w:99%"></i><em>99%</em></li>
       <li><span>Body dropped, head back</span><i style="--w:71%"></i><em>71%</em></li>
-      <li><span>Backstroke lap, phone on deck</span><i style="--w:33%"></i><em>33% · scored 89</em></li>
-      <li><span>Standing at the wall</span><i style="--w:30%"></i><em>30% · ignored</em></li>
+      <li><span>Backstroke lap, phone on deck</span><i style="--w:33%"></i><em>33% · scored 90</em></li>
+      <li><span>Standing at the wall</span><i style="--w:30%"></i><em>30% · upright, not scored</em></li>
       <li><span>Freestyle from the deck</span><i style="--w:18%"></i><em>7–18% · refused</em></li>
     </ul>
-    <p class="fine">The app needs the body in at least 30% of frames and at least one second of real travelling before it will give a number.</p>
+    <p class="fine">The app needs the body in at least 30% of frames and at least one second of real swimming, travelling and not upright, before it will give a number. Across our 87-clip study, about four in ten swimming clips filmed from the deck pass that bar; the rest get an honest refusal instead of a guess.</p>
     <h3>More</h3>
     <div class="linklist">
       <button class="card linkcard" type="button" data-go="examples"><div><b>What the app sees</b><span class="fine">Run the model on six real frames, live.</span></div></button>
@@ -205,7 +205,7 @@
       <div id="scrubReadout" class="fine mono"></div>
     </div>
     <canvas id="angleChart" class="chart" role="img" aria-label="Body angle over the clip"></canvas>
-    <p class="fine">Orange line: body angle while travelling (0° is flat). Aqua band: the target; where the line runs through it the ink prints green. Short marks: readable but not moving, so not scored. Tap the chart to jump.</p>
+    <p class="fine">Orange line: body angle while swimming (0° is flat). Aqua band: the target; where the line runs through it the ink prints green. Short marks: readable but still or upright (at the wall, treading), so not scored. Each reading is good to about ±5°. Tap the chart to jump.</p>
 
     <h3>What to fix</h3>
     <ul id="resTips" class="tips"></ul>
@@ -273,17 +273,20 @@
       <caption class="sr-only">The app's own pipeline on the six sample clips</caption>
       <thead><tr><th>Clip</th><th>Readable</th><th>Body</th><th>Result</th></tr></thead>
       <tbody>
-        <tr><td>Backstroke lap</td><td>33%</td><td>16°</td><td>89</td></tr>
-        <tr><td>Treading water</td><td>99%</td><td>81°</td><td>47</td></tr>
-        <tr><td>Body dropped (acted)</td><td>71%</td><td>76°</td><td>50</td></tr>
-        <tr><td>Standing at the wall</td><td>30%</td><td>82°</td><td>refused</td></tr>
-        <tr><td>Freestyle from deck (2 clips)</td><td>18%</td><td>–</td><td>refused</td></tr>
+        <tr><td>Backstroke lap</td><td>33%</td><td>14°</td><td>90</td></tr>
+        <tr><td>Treading water</td><td>99%</td><td>upright</td><td>refused: not a lap</td></tr>
+        <tr><td>Body dropped (acted)</td><td>71%</td><td>upright</td><td>refused: not a lap</td></tr>
+        <tr><td>Standing at the wall</td><td>30%</td><td>upright</td><td>refused</td></tr>
+        <tr><td>Freestyle from deck (2 clips)</td><td>16–18%</td><td>–</td><td>refused</td></tr>
       </tbody>
     </table>
-    <p class="fine">Pose model: YOLO11n-pose exported to ONNX, run by onnxruntime-web in the browser. The study used the larger YOLO11m at 1280 px, which reads about 60% of swimming frames; the phone model trades some of that for speed. Everything above is reproducible from the repository's test folder.</p>
+    <p class="fine">Pose model: YOLO11n-pose exported to ONNX, run by onnxruntime-web in the browser. Before v0.4 the treading and body-dropped clips were given scores of 47 and 50, which was wrong: neither is a lap. The upright rule fixed that. The 31-clip study used the larger YOLO11m at 1280 px, which reads about 60% of swimming frames; the phone model trades some of that for speed. Everything above is reproducible from the repository's test folder (test/run_clips_yolo.js) and the 87-clip study in feasibility/v04.</p>
+    <h3>What the research says</h3>
+    <p>Swimmers' trunks sit 10° to 15° from flat at everyday speeds, and front crawl and backstroke are the same within a degree or two (Zamparo and colleagues 2009; Gonjo and colleagues 2023). Novice 8 to 13-year-olds measured 2° to 14°, and the angle fell as they improved (Jerszyński and colleagues 2013). A phone held on the deck looks down at the water, which adds to the angle in the picture: our own clearly flat laps read 11° to 32°. So the app's bands are set about 10° above the papers, and every reading is quoted to ±5°, the error found when 2D pose keypoints are checked against lab motion capture on land. Children stroke faster than adults, about 35 cycles a minute at an easy pace (Kjendlie and colleagues 2004), which is why the rhythm band reaches 1.5 strokes a second per arm. The full list of sources is in the repository, feasibility/v04/LITERATURE.md.</p>
     <h3>Honest limits</h3>
     <ul class="plain">
-      <li>Thresholds come from one pool and one swimmer. They need more swimmers before they mean anything beyond "flat or not".</li>
+      <li>The body-line bands lean on published adult and novice studies, shifted for a deck-height phone; the head-position and rhythm bands are our own and are not validated.</li>
+      <li>Frames where the body is steeper than 60° (standing, treading, at the wall) are counted but never scored. If that is most of what the app saw, it says so instead of scoring.</li>
       <li>Freestyle filmed from standing height is mostly unreadable with the phone model.</li>
       <li>The app follows one person. It is not a lifeguard and never will be. The live coach and the float test are the same model, so they share the same limits.</li>
     </ul>
@@ -299,6 +302,8 @@
     </div>
     <h3>Consent</h3>
     <p>Film only swimmers you are responsible for, or who have agreed. For anyone under 18 that means a parent or guardian is doing the filming or has said yes. Do not film other people's children in the background if you can avoid it, and never share a clip without asking.</p>
+    <h3>Pose model</h3>
+    <label class="toggle big"><input id="carefulToggle" type="checkbox"><span>Always use the careful model for laps. It reads more of the swimmer in hard clips and treading water, takes about twice as long, and is a one-time 40 MB download. The live coach always uses the fast model.</span></label>
     <h3>Your data</h3>
     <p id="dataSummary" class="fine"></p>
     <div id="swimmerManage" class="list"></div>
@@ -345,6 +350,7 @@
 <script src="js/safety.js"></script>
 <script src="js/plan.js"></script>
 <script src="js/share.js"></script>
+<script src="js/track.js"></script>
 <script src="js/draw.js"></script>
 <script src="js/report.js"></script>
 <script src="js/live.js"></script>
