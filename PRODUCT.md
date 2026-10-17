@@ -43,7 +43,7 @@ Everything runs on the device: the pose model, the scoring, the history. No acco
 
 ## Brand Commitments
 
-The name "SafeDive Coach" stays. Nothing about the current look is locked: the pool-deck palette, lane-rope stripe and condensed display type in `app/css/style.css` are the incumbent, open to refinement or replacement if it serves the parent and the judges better. (Confirmed 2026-10-17.)
+The name "SafeDive Coach" stays. The current look is locked (confirmed 2026-10-17): the pool-deck palette (ink, deck, paper, water, rope red), the lane-rope stripe, the condensed display type and the nine-screen layout in `app/index.html` and `app/css/style.css` are the design. Future work refines it; it does not replace it or introduce a component library, framework or build step.
 
 Voice as written so far: plain, short, honest about limits, speaks to the parent, never scares ("not a safety device", "an adult must always be watching the water"). The first-run consent sheet text in `app/docs/PRIVACY.md` is considered settled.
 
