@@ -24,6 +24,7 @@ const THRESHOLDS = {
   minReadable: 0.30,     // below this share of readable frames we refuse to score (our calibration, 87-clip study)
   minScoredSeconds: 1.0, // need at least this much travelling, readable swimming
   bodyLine: { great: 15, ok: 30 },          // image-plane torso angle in degrees (0 = flat); see the note above
+  steepMax: 45,          // a travelling swimmer reading steeper than this is a camera problem (high, at the end of the lane, behind), not a swimming one: refuse, do not coach
   headLift: { freestyle: [-0.1, 0.35], backstroke: [0.0, 0.5], kick: [-0.1, 0.4], breaststroke: [-0.1, 0.6] },   // unvalidated proxy
   strokeHz: { freestyle: [0.5, 1.5], backstroke: [0.5, 1.5], breaststroke: [0.3, 0.9], kick: [0.3, 3.0] },     // per arm; ceilings from the child data above
   errorDeg: 5,           // the error bar the app shows next to a body-line reading
@@ -49,6 +50,10 @@ function scoreClip(summary, stroke, fps) {
     return { ok: false, reason: 'I did not see enough actual swimming. Start recording after the push-off and stop before the wall, so the clip is the swimmer travelling, not standing.' };
   }
 
+  if (summary.torsoAngle !== null && summary.torsoAngle > T.steepMax) {
+    return { ok: false, steep: true, reason: `The body read ${summary.torsoAngle.toFixed(0)}° from flat the whole time, steeper than anyone swims. That happens when the phone is high above the water, at the end of the lane, or behind the swimmer, and the angle in the picture is not the angle in the water. Film from the side with the phone near water level and try again.` };
+  }
+
   const parts = [];
   const tips = [];
   const issues = [];                         // short keys for the tips, used to pick a drill (see js/drills.js)
@@ -61,7 +66,7 @@ function scoreClip(summary, stroke, fps) {
   else if (a <= T.bodyLine.ok) bodyPts = 50 - 25 * (a - T.bodyLine.great) / (T.bodyLine.ok - T.bodyLine.great);
   else bodyPts = clamp(25 - 25 * (a - T.bodyLine.ok) / 30, 0, 25);
   parts.push({ key: 'body', name: 'Body line', pts: Math.round(bodyPts), max: 50, value: `${a.toFixed(0)}° from flat, give or take ${T.errorDeg}°` });
-  if (a > T.bodyLine.ok) say('hips_low', 'Hips are sinking. Press the chest down and look at the bottom of the pool so the hips float up. Try kicking from the hips, not the knees.');
+  if (a > T.bodyLine.ok) say('hips_low', 'Hips look low. Press the chest down and look at the bottom of the pool so the hips float up. Try kicking from the hips, not the knees. (A phone held high above the water makes the body read steeper than it is: film lower to be sure.)');
   else if (a > T.bodyLine.great) say('hips_slightly_low', 'Body line is a little low. Keep the kick going steadily so the legs stay near the surface.');
   else say('body_flat', 'Body line is flat. Nice.');
 

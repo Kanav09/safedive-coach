@@ -68,5 +68,11 @@ console.log('gap check passed');
   assert.ok(UPRIGHT_MAX >= 55 && UPRIGHT_MAX <= 65);
   const { scoreClip } = require('../js/scoring.js');
   const r = scoreClip(s1, 'freestyle', fps); assert.ok(!r.ok && /upright/.test(r.reason), 'refusal names the upright problem: ' + r.reason);
+  // a travelling body at 50 degrees is a camera problem, not a hips problem
+  const steep = i => ({ torsoAngle: 50, hipDrop: 0.7, headLift: 0.2, wristY: 1 + (i % 4) / 4, torsoLen: 50, shX: 20 * i, shY: 100 });
+  const s3 = clipSummary(Array.from({ length: 40 }, (_, i) => steep(i)), fps); const r3 = scoreClip(s3, 'freestyle', fps);
+  assert.ok(!r3.ok && r3.steep && /phone/.test(r3.reason), 'steep laps refuse with camera advice: ' + r3.reason);
+  const s4 = clipSummary(Array.from({ length: 40 }, (_, i) => Object.assign(steep(i), { torsoAngle: 38 })), fps); const r4 = scoreClip(s4, 'freestyle', fps);
+  assert.ok(r4.ok && r4.issues[0] === 'hips_low' && /film lower/.test(r4.tips[0]), '38 degrees still scores, with the camera caveat');
   console.log('upright rule checks passed');
 }

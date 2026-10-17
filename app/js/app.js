@@ -300,7 +300,7 @@ function renderResults() {
   if (!result.ok) {
     scoreEl.hidden = true; parts.innerHTML = ''; tips.innerHTML = '';
     refuse.hidden = false;
-    const canRetry = !shared && lastRun.model === 'fast' && lastRun.src && summary.readableFrac < THRESHOLDS.minReadable;
+    const canRetry = !shared && lastRun.model === 'fast' && lastRun.src && (summary.readableFrac < THRESHOLDS.minReadable || result.steep);
     refuse.innerHTML = `<b>Not scored.</b> ${esc(result.reason)}<br><span class="fine">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames, travelling in ${Math.round(summary.movingFrac * 100)}%. The app refuses to guess rather than give a number it cannot stand behind. <a href="#" data-go="guide">How to film</a>.</span>${canRetry ? `<button id="btnRetryCareful" class="btn secondary sm" type="button">Read it again with the careful model (slower, ${POSE_MODELS.careful.mb} MB once)</button>` : ''}`;
     if (canRetry) $('btnRetryCareful').onclick = () => analyze(lastRun.src, lastRun.stroke, lastRun.swimmerObj, lastRun.mode, 'careful').catch(err => { console.error('SafeDive', err); showError(err.message); });
     $('btnMakePlan').hidden = true;

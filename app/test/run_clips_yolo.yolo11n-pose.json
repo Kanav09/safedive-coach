@@ -1,24 +1,79 @@
 [
   {
-    "clip": "amateur_kari_freestyle_side_1080p",
-    "frames": 54,
-    "msPerFrame": "371",
-    "personSeen": "69%",
-    "readable": "48%",
-    "moving": "4%",
-    "angle": "38",
+    "clip": "negative_resting_at_wall_6012160",
+    "frames": 30,
+    "msPerFrame": "376",
+    "personSeen": "73%",
+    "readable": "70%",
+    "moving": "0%",
+    "angle": "-",
     "score": "REFUSED",
     "why": "Most of the time I could see the swimmer, the body read as u"
   },
   {
-    "clip": "negative_interview_adam_brown",
-    "frames": 125,
-    "msPerFrame": "392",
+    "clip": "negative_woman_at_wall_8050293",
+    "frames": 60,
+    "msPerFrame": "371",
+    "personSeen": "88%",
+    "readable": "67%",
+    "moving": "27%",
+    "angle": "47",
+    "score": "REFUSED",
+    "why": "The body read 47° from flat the whole time, steeper than any"
+  },
+  {
+    "clip": "pexels_backstroke_headon_athlete",
+    "frames": 47,
+    "msPerFrame": "379",
     "personSeen": "100%",
-    "readable": "0%",
+    "readable": "100%",
     "moving": "0%",
     "angle": "-",
     "score": "REFUSED",
-    "why": "I could only see the swimmer's body in 0% of the video. Film"
+    "why": "Most of the time I could see the swimmer, the body read as u"
+  },
+  {
+    "clip": "pexels_butterfly_outdoor_portrait",
+    "frames": 40,
+    "msPerFrame": "384",
+    "personSeen": "38%",
+    "readable": "18%",
+    "moving": "8%",
+    "angle": "20",
+    "score": "REFUSED",
+    "why": "I could only see the swimmer's body in 18% of the video. Fil"
+  },
+  {
+    "clip": "pexels_kickboard_drill_side_elevated",
+    "frames": 46,
+    "msPerFrame": "376",
+    "personSeen": "83%",
+    "readable": "67%",
+    "moving": "15%",
+    "angle": "56",
+    "score": "REFUSED",
+    "why": "The body read 56° from flat the whole time, steeper than any"
+  },
+  {
+    "clip": "pro_universiade_400free_race_wide",
+    "frames": 125,
+    "msPerFrame": "382",
+    "personSeen": "54%",
+    "readable": "34%",
+    "moving": "1%",
+    "angle": "20",
+    "score": "REFUSED",
+    "why": "Most of the time I could see the swimmer, the body read as u"
+  },
+  {
+    "clip": "pro_universiade_4x200_race_wide",
+    "frames": 125,
+    "msPerFrame": "379",
+    "personSeen": "48%",
+    "readable": "47%",
+    "moving": "6%",
+    "angle": "44",
+    "score": 63,
+    "why": "Hips look low. Press the chest down and look at the bottom o"
   }
 ]

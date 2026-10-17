@@ -119,3 +119,38 @@ hips at 0.9+, angle 75 to 90°). Result: refused, "the body read as upright … 
 is the right verdict and the wording added for exactly this case. Lesson confirmed: a head-on view gives the model no
 hips to read, and the swimmer-following falls back to whoever is visible, so the upright rule is what saves the parent
 from a wrong score.
+
+Results on those two (shipped JavaScript, both models): the interview clip reads 0% readable with either model (shoulders in
+frame, hips never, so no frame passes the torso gate) and is refused; the head-on freestyle reads 48% (fast) / 56% (careful)
+but is refused as upright by both, as explained above. Neither model produced a score on footage that is not a lap.
+
+## The ladder, final rules (fast model, shipped JavaScript, 24 clips the pipeline was never tuned on)
+
+Final rule set: follow one swimmer, median-smooth 3 samples, keypoint gate 0.4, upright frames (>60°) never scored, a scored
+median steeper than 45° refused as a camera problem, readability gate 30%, one second of real swimming.
+
+| Level | Clip | Readable | Verdict |
+|---|---|---|---|
+| beginner | child on a back float, side view (web06) | 54% | **100**, body 6°, flat |
+| beginner | child freestyle from above, four clips (web08 to 11) | 11 to 23% | refused: not readable (the known freestyle limit) |
+| beginner | your own six sample clips | see parity table | one lap 90, the rest refused for the right reasons |
+| adult | freestyle, close, side-on (web03) | 65% | **89**, body 17°, "a little low" |
+| adult | freestyle with heavy splash (web07) | 63% | **62**, body 36°, "hips look low" plus the camera caveat |
+| adult | lap swimmer, elevated stock shot (Pexels 15561931) | 55% | **76**, body 23° |
+| adult | kickboard drill, filmed from high behind (Pexels 8050294) | 67% | refused: 56°, camera too high or behind (was scored 50 "hips sinking" before the steep rule) |
+| adult | butterfly, portrait (Pexels 8686014) | 18% | refused: not readable; not a stroke the app claims |
+| adult | backstroke head-on (Pexels 4115398) | 100% | refused: body reads upright, film from the side |
+| adult | freestyle from the end of the lane (Commons, Kari) | 48% | refused: upright / end of lane |
+| adult | small pool, far away (web13) | 4% | refused: not readable |
+| not a lap | swimmer resting at the wall (Pexels 6012160) | 70% | refused: upright |
+| not a lap | woman at the wall, portrait (Pexels 8050293) | 67% | refused: 47°, steep (was scored 61 and 100 by the two models before the steep rule) |
+| not a lap | poolside interview (Commons, Adam Brown) | 0% | refused: not readable |
+| not a lap | race pool from overhead (web02), lane head-on (web05) | 80 to 100% | refused: upright, film from the side |
+| elite | Universiade 400 m final, wide shot from the stands | 34% | refused: upright most of the time (swimmers tiny; blocks and podium frames) |
+| elite | Universiade 4×200 m final, wide shot from the stands | 47% | **63**, body 44°, "hips look low" plus the camera caveat |
+
+Five scored, nineteen refused, and after the steep rule no clip that is not a lap received a score. The one verdict a coach
+would dispute is the 4×200 relay: elite swimmers told their hips look low. The camera is in the stands, 30° or more above the
+water, which the app does not claim to support and the tip now says so; a side view at water level is the filming guide's
+first rule for exactly this reason. Everything above is reproducible with `FRAMES=frames_study|frames_commons|frames_commons2
+node test/run_clips_yolo.js` once the frames are dumped (`feasibility/v04/commons/SOURCES.md` lists the inputs).

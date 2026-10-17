@@ -2,13 +2,14 @@ const assert = require('assert');
 const S = require('../js/scoring.js');
 const fps = 30;
 const good = { readableFrac: 0.8, scoredFrames: 90, torsoAngle: 8, hipDrop: 0.1, headLift: 0.2, strokeHz: 0.9 };
-const sinking = { ...good, torsoAngle: 45 };
+const sinking = { ...good, torsoAngle: 40 };          // low hips but still a plausible swimming view; 45+ is refused as a camera problem (see metrics.test.js)
 const unreadable = { ...good, readableFrac: 0.1 };
 const parked = { ...good, scoredFrames: 5 };
 const g = S.scoreClip(good, 'freestyle', fps);
 assert.ok(g.ok && g.score >= 95, 'clean lap should score high: ' + JSON.stringify(g));
 const s = S.scoreClip(sinking, 'freestyle', fps);
-assert.ok(s.ok && s.score < g.score - 30 && s.tips.some(t => /sinking/i.test(t)), 'sinking hips must cost points and say so');
+assert.ok(s.ok && s.score < g.score - 30 && s.tips.some(t => /hips look low/i.test(t)), 'low hips must cost points and say so');
+const steep = S.scoreClip({ ...good, torsoAngle: 50 }, 'freestyle', fps); assert.ok(!steep.ok && steep.steep, 'a travelling body at 50 degrees is refused, not coached');
 assert.ok(!S.scoreClip(unreadable, 'freestyle', fps).ok, 'unreadable clip must be refused');
 assert.ok(!S.scoreClip(parked, 'freestyle', fps).ok, 'parked swimmer must be refused');
 assert.strictEqual(S.levelFor(0).name, 'Tadpole'); assert.strictEqual(S.levelFor(9).name, 'Otter');
