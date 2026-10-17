@@ -2,7 +2,7 @@
 
 *Platform: installable web app (works on iPhone and Android through the browser, no store needed). Inputs: a clip recorded in the app or chosen from the camera roll. Primary user: a parent on the pool deck with a beginner swimmer. Stage: working prototype, October 2026. Inference: on the phone, nothing uploaded.*
 
-This brief adapts a generic "swim video analysis" discovery template to what SafeDive Coach actually is. Where the template assumed a native iOS app with cloud inference and a 12-week team, we chose the opposite on purpose: a one-page web app whose model runs locally, built by two high-schoolers in three weeks. Those choices are explained under Assumptions.
+This brief adapts a generic "swim video analysis" discovery template to what SafeDive Coach actually is. Where the template assumed a native iOS app with cloud inference and a 12-week team, we chose the opposite on purpose: a one-page web app whose model runs locally, built by a team of high-school students in three weeks. Those choices are explained under Assumptions.
 
 ## Personas
 
