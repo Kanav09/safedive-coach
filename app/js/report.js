@@ -1,7 +1,7 @@
 // SafeDive Coach: turns one analysed lap into (a) a plain JSON record and (b) a report-card image.
 // The JSON shape is documented in docs/ANALYSIS_SCHEMA.md and checked by test/report.test.js.
 
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.4.0';
 
 function resultToJSON(run, sampleFps) {
   const { summary, result, perFrame, times, stroke, swimmer } = run;

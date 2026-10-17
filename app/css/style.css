@@ -26,6 +26,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* wins over any display rule, so hidden means hidden */
 html { -webkit-text-size-adjust: 100%; scrollbar-color: var(--ink) var(--paper); }
 body { margin: 0; font-family: var(--body); font-size: var(--t1); line-height: 1.45; color: var(--ink); background: var(--paper); font-variant-numeric: tabular-nums; }
 main { max-width: 560px; margin: 0 auto; padding: 0 var(--gutter) calc(var(--tabs) + 28px); }
@@ -230,3 +231,74 @@ button.hist.on { border-bottom-color: var(--ink); }
   .form { grid-template-columns: 1fr 1.3fr; }
   .hero h1 { font-size: 56px; }
 }
+
+/* ---- v0.4: swimmers, live coach, water safety, badges, plan, compare, toast, install ---- */
+.sectionhead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 18px 0 6px; }
+.label { font: 700 var(--t0) var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+/* a swimmer is a round ink stamp with the initial, rotated a touch like the level pill */
+.swimrow { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; margin: 0 -2px; scrollbar-width: none; } .swimrow::-webkit-scrollbar { display: none; }
+.stamp { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 68px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--ink); font-family: var(--body); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.stamp b { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; border: 3px solid var(--ink); font: 800 24px/1 var(--display); transform: rotate(-8deg); transition: transform .15s var(--ease), background-color .15s var(--ease), color .15s var(--ease); }
+.stamp span { font-size: var(--t0); font-weight: 700; max-width: 68px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stamp.ink0 b { border-color: var(--aqua); color: var(--aqua-text); } .stamp.ink1 b { border-color: var(--sun); color: var(--sun-text); } .stamp.ink2 b { border-color: var(--over); color: var(--over); } .stamp.ink3 b { border-color: var(--ink); color: var(--ink); }
+.stamp.on b { color: var(--paper); transform: rotate(-8deg) scale(1.06); } .stamp.ink0.on b { background: var(--aqua); } .stamp.ink1.on b { background: var(--sun); } .stamp.ink2.on b { background: var(--over); } .stamp.ink3.on b { background: var(--ink); }
+.stamp.on span { color: var(--sun-text); }
+.stamp.add b { border-style: dashed; border-color: var(--ink-2); color: var(--ink-2); font-weight: 400; } .stamp.add span { color: var(--ink-2); }
+.stamp:active b { transform: rotate(-8deg) scale(.95); }
+@media (hover: hover) { .stamp:hover b { transform: rotate(-4deg) scale(1.06); } }
+.addrow { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: end; margin: 4px 0 8px; } .addrow .btn { margin: 0; } .addrow[hidden] { display: none; }
+.actions { display: grid; gap: 0; margin-top: 8px; } .actions .field { margin-bottom: 2px; } .actions .btn.secondary { margin-top: 10px; }
+/* cards: the shadcn card contract (header, content, footer) as a ruled paper box */
+.card { background: var(--paper-bright); border: var(--rule) solid var(--ink); border-radius: 3px; padding: 12px 14px 14px; margin: 14px 0 0; }
+.card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; } .card-head h3 { margin: 0; padding: 0; border: 0; }
+.linkcard { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; text-align: left; cursor: pointer; font-family: inherit; color: inherit; transition: background-color .15s var(--ease); }
+.linkcard > div:first-child { display: grid; gap: 2px; } .linkcard b { font: 800 var(--t2)/1.1 var(--display); } .linkcard .fine { display: block; }
+.linkcard::after { content: ""; justify-self: end; width: 10px; height: 10px; border-right: 3px solid var(--ink); border-top: 3px solid var(--ink); transform: rotate(45deg); grid-column: 2; grid-row: 1; align-self: center; }
+.linkcard { grid-template-columns: 1fr auto; } .linkcard .meter { grid-column: 1 / -1; }
+@media (hover: hover) { .linkcard:hover { background: var(--paper-deep); } }
+.linklist { display: grid; gap: 10px; margin-top: 10px; } .linklist .card { margin: 0; }
+.checklist { list-style: none; padding: 0; margin: 10px 0 4px; display: grid; gap: 8px; }
+.checklist li { padding: 6px 0; border-bottom: 1px solid var(--hair); } .checklist li:last-child { border-bottom: 0; }
+.checklist .toggle { white-space: normal; align-items: flex-start; } .checklist .toggle input { margin-top: 2px; } .checklist li.done span { color: var(--ink-2); text-decoration: line-through; text-decoration-color: var(--hair); }
+.row.tight .btn { margin-top: 10px; }
+.meter.thin { height: 8px; } .meter.big { height: 22px; margin: 12px 0 8px; }
+/* live coach */
+.stage.live { aspect-ratio: 16 / 9; } .stage.live video { width: 100%; height: 100%; object-fit: cover; } .stage.live canvas { width: 100%; height: 100%; object-fit: cover; }
+.livebadge { position: absolute; left: 10px; top: 10px; z-index: 2; font: 800 var(--t0) var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--paper); background: var(--sun-text); padding: 4px 8px; border-radius: 3px; }
+.livebadge::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--paper); margin-right: 6px; animation: blink 1.2s steps(2) infinite; }
+@keyframes blink { to { opacity: 0; } } .livebadge[hidden] { display: none; }
+.chart.dial { margin-top: 12px; }
+.liveword { display: grid; gap: 2px; padding: 12px 0 10px; border-bottom: var(--rule) solid var(--ink); }
+.liveword b { font: 800 var(--t3)/1 var(--display); letter-spacing: -.02em; } .liveword span { font-size: 17px; }
+.holdbox { margin: 8px 0 0; } .holdtext { display: flex; align-items: baseline; gap: 8px; } .holdtext b { font: 800 var(--t3)/1 var(--display); color: var(--sun-text); } .holdtext span { color: var(--ink-2); font-size: 15px; }
+.holdbox[hidden] { display: none; }
+.readouts.small b { font-size: var(--t2); }
+/* water safety */
+.skills { list-style: none; padding: 0; margin: 12px 0 0; counter-reset: skill; display: grid; gap: 10px; }
+.skill { background: var(--paper-bright); border: var(--rule) solid var(--ink); border-radius: 3px; padding: 12px 14px 14px; display: grid; gap: 6px; }
+.skill-head { display: flex; align-items: center; gap: 10px; } .skill-head b { font: 800 var(--t2)/1.1 var(--display); }
+.skill .tick { flex: none; width: 26px; height: 26px; border: var(--rule) solid var(--ink); border-radius: 3px; background: var(--paper); display: grid; place-items: center; }
+.skill.done .tick { background: var(--over); border-color: var(--over); } .skill.done .tick::after { content: ""; width: 7px; height: 12px; border: solid var(--paper); border-width: 0 3px 3px 0; transform: rotate(45deg) translate(-1px, -1px); }
+.skill p { margin: 0; font-size: 15px; color: var(--ink-2); }
+.skill .status { font: 700 var(--t0) var(--body); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2); } .skill .status.ok { color: var(--over); }
+.skill-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; } .skill-actions .btn { margin: 0; width: auto; flex: 1 1 auto; }
+.skill.done { border-color: var(--over); }
+/* badges: round seals, printed when earned, blank paper when not */
+.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-top: 10px; }
+.badge { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 10px 6px; border: 1px solid var(--hair); border-radius: 3px; background: var(--paper-bright); color: var(--ink-2); }
+.badge b { font: 800 var(--t0)/1.1 var(--display); letter-spacing: 0; color: inherit; } .badge .fine { font-size: 11px; line-height: 1.25; }
+.badge .seal { width: 44px; height: 44px; border-radius: 50%; border: 3px dashed var(--hair); }
+.badge.on { color: var(--ink); border-color: var(--ink); } .badge.on .seal { border: 0; background: var(--aqua); position: relative; }
+.badge.on .seal::after { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--sun); mix-blend-mode: multiply; }
+/* compare */
+.table td.up { color: var(--over); font-weight: 700; } .table td.down { color: var(--sun-text); font-weight: 700; }
+/* toast: one line above the tabs, like sonner */
+.toast { position: fixed; left: 50%; bottom: calc(var(--tabs) + env(safe-area-inset-bottom) + 14px); transform: translate(-50%, 8px); max-width: min(92vw, 520px); background: var(--ink); color: var(--paper); font: 700 15px/1.3 var(--body); padding: 12px 16px; border-radius: 3px; border-left: 6px solid var(--sun); z-index: 15; opacity: 0; transition: opacity .18s var(--ease), transform .18s var(--ease); pointer-events: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); } .toast[hidden] { display: none; }
+.notice.install { display: grid; gap: 6px; border-color: var(--aqua); } .notice.install .row { margin: 0; } .notice.install .btn { margin-top: 6px; }
+/* five tabs */
+.tabs { grid-template-columns: repeat(5, 1fr); } .tabs button { font-size: 11px; letter-spacing: .04em; } .tabs button.on::before { left: 12px; right: 12px; }
+@media (prefers-reduced-motion: reduce) { .livebadge::before { animation: none; } .toast { transition: none; } .stamp b { transition: none; } }
+.sharefield { display: block; width: 100%; margin-top: 8px; height: 40px; font: var(--t0) var(--body); color: var(--ink); background: var(--paper); border: 1px solid var(--hair); border-radius: 3px; padding: 0 10px; }
+.screen:focus { outline: none; }   /* a screen gets focus after navigation for screen readers; the ring belongs on controls, not the page */
+h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }

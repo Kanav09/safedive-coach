@@ -4,7 +4,7 @@
 
 | Priority | Feature | Status (Oct 14, 2026) |
 |---|---|---|
-| Must | Choose or record a clip, analyse on device, score 0 to 100 | Built; browser video flow pending a test on a phone |
+| Must | Choose or record a clip, analyse on device, score 0 to 100 | Built; verified end to end in Chrome 2026-10-17 |
 | Must | Confidence gate: refuse when torso readable < 30% or scored swimming < 1 s | Built, tested on real clips |
 | Must | Three parts: body line (50), head position (30), stroke rhythm (20) | Built, unit tested |
 | Must | One plain tip per part, drill for each fixable tip | Built (7 drills) |
@@ -15,7 +15,11 @@
 | Should | Report card image and JSON export | Built |
 | Could | Live "what the app sees" demo on real frames | Built |
 | Could | Larger model via WebGPU for freestyle readability | Not started; same code path, swap the ONNX file |
-| Could | Share a clip with an instructor for review | Not planned; would break the no-upload promise |
+| Could | Share a clip with an instructor for review | Replaced by "share a lap as a link": numbers only, in the URL fragment, no server (v0.4) |
+| v0.4 | Live coach: camera, body-line dial, one cue, optional voice | Built (`js/live.js`); needs a phone or laptop camera to test |
+| v0.4 | Water safety: five Red Cross skills, parent sign-off, camera or clip float test | Built (`js/safety.js`); float test unit tested, camera path needs a pool |
+| v0.4 | Swimmer profiles, badges, weekly plan + calendar, compare two laps | Built (`js/store.js`, `js/badges.js`, `js/plan.js`, `draw.js`) |
+| v0.4 | Installable, works offline (service worker caches the model) | Built (`sw.js`, `manifest.json`, icons) |
 
 ## User stories with acceptance criteria
 

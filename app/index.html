@@ -4,17 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SafeDive Coach</title>
-<meta name="description" content="Film one lap of your kid swimming. SafeDive Coach reads the body position on the phone and tells you the one thing to fix.">
+<meta name="description" content="Film one lap of your kid swimming. SafeDive Coach reads the body position on the phone and tells you the one thing to fix. Live coaching, water-safety skills, progress.">
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
 <meta name="theme-color" content="#f6f1e4">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="SafeDive">
 </head>
 <body>
 
 <header class="top">
   <div class="brand"><span class="mark" aria-hidden="true"></span><span>SafeDive <b>Coach</b></span></div>
-  <button id="levelPill" class="pill" type="button" title="Your level: tap for progress">Tadpole</button>
+  <button id="levelPill" class="pill" type="button" title="Level: tap for progress">Tadpole</button>
 </header>
 
 <main id="app">
@@ -30,18 +34,20 @@
     </figure>
     <p class="hero-sub">The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</p>
 
-    <div class="stats">
-      <div><b id="statSessions">0</b><span>laps scored</span></div>
-      <div><b id="statStreak">0</b><span>week streak</span></div>
-      <div><b id="statBest">–</b><span>best score</span></div>
+    <div id="installHint" class="notice install" hidden>
+      <div><b>Keep it on the home screen.</b> <span id="installText">Works at the pool with no signal once installed.</span></div>
+      <div class="row tight"><button id="btnInstall" class="btn sm primary" type="button">Install</button><button id="btnInstallNo" class="btn sm ghost" type="button">Not now</button></div>
     </div>
 
-    <div id="lastLap" class="lastlap" hidden><span id="lastLapText"></span><div class="meter" aria-hidden="true"><i id="lastLapFill" style="--w:0%"></i></div></div>
+    <div class="sectionhead"><span class="label">Swimmer</span><span id="swimmerHint" class="fine"></span></div>
+    <div id="swimRowHome" class="swimrow" role="group" aria-label="Choose a swimmer"></div>
+    <form id="addSwimmerForm" class="addrow" hidden>
+      <label class="field"><span>First name</span><input id="addSwimmerName" type="text" placeholder="e.g. Maya" maxlength="24" autocomplete="off"></label>
+      <button class="btn sm primary" type="submit">Add swimmer</button>
+      <button id="btnAddCancel" class="btn sm ghost" type="button">Cancel</button>
+    </form>
 
-    <div id="homeError" class="notice warn" role="alert" hidden></div>
-
-    <div class="form">
-      <label class="field"><span>Swimmer's name</span><input id="swimmerName" type="text" placeholder="e.g. Maya" autocomplete="off" maxlength="24"></label>
+    <div class="actions">
       <label class="field"><span>Stroke</span>
         <select id="strokeSelect">
           <option value="backstroke">Backstroke or back float</option>
@@ -50,12 +56,79 @@
           <option value="breaststroke">Breaststroke</option>
         </select>
       </label>
+      <button id="btnPick" class="btn primary" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l2-2h6l2 2h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Score a lap</button>
+      <input id="fileInput" type="file" accept="video/*" capture="environment" hidden>
+      <button id="btnLive" class="btn secondary" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>Live coach</button>
     </div>
-    <button id="btnPick" class="btn primary" type="button">Record or choose a video</button>
-    <input id="fileInput" type="file" accept="video/*" capture="environment" hidden>
-    <button id="btnExamples" class="btn ghost" type="button">See what the app sees</button>
+    <div id="homeError" class="notice warn" role="alert" hidden></div>
+
+    <section id="planCard" class="card" hidden>
+      <div class="card-head"><h3>This week</h3><span id="planMeta" class="fine"></span></div>
+      <ul id="planList" class="checklist"></ul>
+      <div class="row tight"><button id="btnPlanIcs" class="btn sm secondary" type="button">Add to calendar</button><button id="btnPlanClear" class="btn sm ghost" type="button">Clear plan</button></div>
+    </section>
+
+    <div class="stats">
+      <div><b id="statSessions">0</b><span>laps scored</span></div>
+      <div><b id="statStreak">0</b><span>week streak</span></div>
+      <div><b id="statBest">–</b><span>best score</span></div>
+    </div>
+    <div id="lastLap" class="lastlap" hidden><span id="lastLapText"></span><div class="meter" aria-hidden="true"><i id="lastLapFill" style="--w:0%"></i></div></div>
+
+    <button id="safetyLine" class="card linkcard" type="button" data-go="safety">
+      <div><b>Water safety</b><span id="safetyLineText" class="fine">Five skills, signed off by you or checked by the camera.</span></div>
+      <div class="meter thin" aria-hidden="true" style="--band:100%"><i id="safetyFill" style="--w:0%"></i></div>
+    </button>
+
     <p class="fine">Best results: side of the pool, phone near water level, 10 to 15 seconds of swimming. <a href="#" data-go="guide">How to film</a>.</p>
     <p class="fine">This is a swim-form helper, not a safety device. An adult must always be watching the water.</p>
+  </section>
+
+  <!-- LIVE COACH -->
+  <section id="screen-live" class="screen">
+    <h2 id="liveTitle">Live coach</h2>
+    <p id="liveIntro" class="lead">Point the phone at the swimmer from the side. The dial shows the body line against the water as it happens, with one cue you can call out. Nothing is recorded.</p>
+    <div class="stage live"><video id="liveVideo" playsinline muted autoplay></video><canvas id="liveOverlay"></canvas><span id="liveBadge" class="livebadge" hidden>Live</span></div>
+    <canvas id="dial" class="chart dial" role="img" aria-label="Body line against the water line"></canvas>
+    <div class="liveword" role="status" aria-live="polite"><b id="liveWord">Camera off</b><span id="liveCue">Tap Start to turn on the camera.</span></div>
+    <div id="holdBox" class="holdbox" hidden>
+      <div class="meter big" role="progressbar" aria-label="Seconds at the surface" aria-valuemin="0" aria-valuemax="60" aria-valuenow="0" style="--band:100%"><i id="holdFill" style="--w:0%"></i></div>
+      <div class="holdtext"><b id="holdSecs">0 s</b><span id="holdTarget">of 60 s at the surface</span></div>
+    </div>
+    <div class="readouts small">
+      <div><b id="liveAngle">–</b><span>body line</span></div>
+      <div><b id="liveFps">–</b><span>reads a second</span></div>
+      <div><b id="liveMs">–</b><span>ms a frame</span></div>
+    </div>
+    <div id="liveError" class="notice warn" role="alert" hidden></div>
+    <label class="toggle"><input id="voiceToggle" type="checkbox"><span>Say the cue out loud</span></label>
+    <button id="btnLiveStart" class="btn primary" type="button">Start camera</button>
+    <button id="btnLiveStop" class="btn danger" type="button" hidden>Stop</button>
+    <p class="fine">Same pose model as a scored lap, 2 to 6 reads a second depending on the phone. Live reads are not saved. The phone is never the adult watching the water.</p>
+  </section>
+
+  <!-- WATER SAFETY -->
+  <section id="screen-safety" class="screen">
+    <h2>Water safety</h2>
+    <p class="lead">Five skills that give a child a real chance after an unexpected fall into deep water. The American Red Cross calls them water competency. Four you watch and sign off. The minute at the surface, the camera can check.</p>
+    <div id="swimRowSafety" class="swimrow" role="group" aria-label="Choose a swimmer"></div>
+    <div id="safetyEmpty" class="empty" hidden><b>Add a swimmer first</b><p>Skills are kept per child.</p><button class="btn secondary sm" type="button" data-add-swimmer>Add a swimmer</button></div>
+    <div id="safetyBody">
+      <div class="levelcard"><b id="safetyCount">0 of 5</b><p class="fine">skills signed off</p><div class="meter" role="progressbar" aria-label="Skills signed off" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" style="--band:100%"><i id="safetyMeter" style="--w:0%"></i></div></div>
+      <ol id="skillList" class="skills"></ol>
+      <input id="floatFile" type="file" accept="video/*" capture="environment" hidden>
+      <button id="btnSafetyCard" class="btn secondary" type="button" hidden>Save the water-safe card</button>
+    </div>
+    <p class="fine">Sign a skill off only when you watched it happen, in water over the child's head, with a lifeguard or an adult right there. This is a record for you, not a certificate.</p>
+  </section>
+
+  <!-- FLOAT TEST RESULT -->
+  <section id="screen-floatresult" class="screen">
+    <div id="floatHeader" class="meta"></div>
+    <div class="scoreblock"><div id="floatNum" class="num"></div><div><div id="floatWord" class="word"></div><div id="floatConf" class="conf"></div></div></div>
+    <div class="meter big" aria-hidden="true" style="--band:100%"><i id="floatFill" style="--w:0%"></i></div>
+    <p id="floatNote" class="lead"></p>
+    <div class="row"><button id="btnFloatAgain" class="btn secondary" type="button">Try again</button><button class="btn primary" type="button" data-go="safety">Back to safety</button></div>
   </section>
 
   <!-- EXAMPLES: what the app sees -->
@@ -63,7 +136,7 @@
     <h2>What the app sees</h2>
     <p class="lead">Real frames from our own filming. Tap one and the pose model runs on it right here, on this device, and draws what it found. The orange line is the torso line the score is built on.</p>
     <div id="exampleList" class="examples"></div>
-    <button class="btn ghost" type="button" data-go="home">Back</button>
+    <button class="btn ghost" type="button" data-go="guide">Back</button>
   </section>
 
   <!-- GUIDE: how to film -->
@@ -91,8 +164,12 @@
       <li><span>Freestyle from the deck</span><i style="--w:18%"></i><em>7–18% · refused</em></li>
     </ul>
     <p class="fine">The app needs the body in at least 30% of frames and at least one second of real travelling before it will give a number.</p>
-    <button class="btn ghost" type="button" data-go="examples">See what the app sees</button>
-    <button class="btn ghost" type="button" data-go="home">Back</button>
+    <h3>More</h3>
+    <div class="linklist">
+      <button class="card linkcard" type="button" data-go="examples"><div><b>What the app sees</b><span class="fine">Run the model on six real frames, live.</span></div></button>
+      <button class="card linkcard" type="button" data-go="evidence"><div><b>Why trust the number</b><span class="fine">The 31-clip study and the app's own results on real clips.</span></div></button>
+      <button class="card linkcard" type="button" data-go="settings"><div><b>Privacy and settings</b><span class="fine">Where the video goes (nowhere), your data, credits.</span></div></button>
+    </div>
   </section>
 
   <!-- ANALYZE -->
@@ -112,28 +189,30 @@
 
   <!-- RESULTS -->
   <section id="screen-results" class="screen">
+    <div id="sharedBanner" class="notice" hidden><b>A shared lap.</b> Scored on someone else's phone. The video stayed there; only the numbers travelled in this link.</div>
     <div id="resHeader" class="meta"></div>
     <div id="resScore" class="scoreblock"></div>
     <div id="resRefuse" class="notice warn" role="status" aria-live="polite" hidden></div>
     <div id="resParts" class="parts"></div>
 
-    <h3>Step through the lap</h3>
-    <div class="stage"><canvas id="resultCanvas"></canvas></div>
-    <div class="scrubrow">
-      <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Frame">
-      <label class="toggle"><input id="targetToggle" type="checkbox"><span>Show target line</span></label>
+    <div id="resStageWrap">
+      <h3>Step through the lap</h3>
+      <div class="stage"><canvas id="resultCanvas"></canvas></div>
+      <div class="scrubrow">
+        <input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Frame">
+        <label class="toggle"><input id="targetToggle" type="checkbox"><span>Show target line</span></label>
+      </div>
+      <div id="scrubReadout" class="fine mono"></div>
     </div>
-    <div id="scrubReadout" class="fine mono"></div>
     <canvas id="angleChart" class="chart" role="img" aria-label="Body angle over the clip"></canvas>
     <p class="fine">Orange line: body angle while travelling (0° is flat). Aqua band: the target; where the line runs through it the ink prints green. Short marks: readable but not moving, so not scored. Tap the chart to jump.</p>
 
     <h3>What to fix</h3>
     <ul id="resTips" class="tips"></ul>
 
-    <div class="row">
-      <button id="btnSaveCard" class="btn secondary" type="button">Save report card</button>
-      <button id="btnCopyJson" class="btn secondary" type="button">Copy as JSON</button>
-    </div>
+    <div class="row"><button id="btnMakePlan" class="btn secondary" type="button">Plan this week</button><button id="btnShareLink" class="btn secondary" type="button">Share link</button></div>
+    <div id="shareBox" class="notice" hidden><b>Link to this lap.</b> Numbers only, no video.<input id="shareUrl" class="sharefield" type="text" readonly aria-label="Share link"></div>
+    <div class="row"><button id="btnSaveCard" class="btn secondary" type="button">Save report card</button><button id="btnCopyJson" class="btn secondary" type="button">Copy as JSON</button></div>
     <button id="btnAgain" class="btn primary" type="button">Score another lap</button>
   </section>
 
@@ -143,21 +222,43 @@
     <p id="drillWhy" class="lead"></p>
     <ol id="drillSteps" class="rules"></ol>
     <p id="drillReps" class="notice"></p>
-    <button id="btnDrillBack" class="btn ghost" type="button">Back to results</button>
+    <button id="btnDrillDone" class="btn primary" type="button">We practised this</button>
+    <div class="row"><button id="btnDrillPlan" class="btn secondary" type="button">Plan this week</button><button id="btnDrillBack" class="btn ghost" type="button">Back to results</button></div>
   </section>
 
   <!-- PROGRESS -->
   <section id="screen-progress" class="screen">
     <h2>Progress</h2>
+    <div id="swimRowProgress" class="swimrow" role="group" aria-label="Choose a swimmer"></div>
     <div class="levelcard">
       <b id="levelName">Tadpole</b><p id="levelNext" class="fine"></p>
       <div id="levelMeter" class="meter" role="progressbar" aria-label="Progress to the next level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="levelFill" style="--w:0%"></i></div>
     </div>
-    <div id="chipRow" class="chips"></div>
+    <h3>Badges</h3>
+    <div id="badgeGrid" class="badges"></div>
+    <h3>Laps</h3>
     <canvas id="historyChart" class="chart" role="img" aria-label="Scores over time"></canvas>
     <div id="sessionDetail" class="notice" hidden></div>
     <div id="historyList" class="list"></div>
+    <button id="btnCompare" class="btn secondary" type="button" hidden>Compare two laps</button>
     <p class="fine">Levels: Tadpole, Minnow at 3 laps, Otter at 8, Dolphin at 15, Shark at 25. A week counts toward the streak when at least one lap is scored.</p>
+  </section>
+
+  <!-- COMPARE -->
+  <section id="screen-compare" class="screen">
+    <h2>Compare two laps</h2>
+    <p class="lead">Orange is lap A, aqua is lap B. Where the lines cross, the ink prints green. The band is the flat zone.</p>
+    <div id="compareEmpty" class="empty" hidden><b>Two laps needed</b><p>Score two laps for the same swimmer and they show up here, one over the other.</p><button class="btn secondary sm" type="button" data-go="home">Score a lap</button></div>
+    <div id="compareBody">
+      <div class="form">
+        <label class="field"><span>Lap A (orange)</span><select id="cmpA"></select></label>
+        <label class="field"><span>Lap B (aqua)</span><select id="cmpB"></select></label>
+      </div>
+      <canvas id="compareChart" class="chart" role="img" aria-label="Body angle over time for two laps"></canvas>
+      <table id="compareTable" class="table"></table>
+      <p id="compareNote" class="lead"></p>
+    </div>
+    <button class="btn ghost" type="button" data-go="progress">Back to progress</button>
   </section>
 
   <!-- ABOUT / EVIDENCE -->
@@ -183,35 +284,40 @@
     <ul class="plain">
       <li>Thresholds come from one pool and one swimmer. They need more swimmers before they mean anything beyond "flat or not".</li>
       <li>Freestyle filmed from standing height is mostly unreadable with the phone model.</li>
-      <li>The app follows one person. It is not a lifeguard and never will be.</li>
+      <li>The app follows one person. It is not a lifeguard and never will be. The live coach and the float test are the same model, so they share the same limits.</li>
     </ul>
     <button class="btn ghost" type="button" data-go="settings">Privacy and settings</button>
+    <button class="btn ghost" type="button" data-go="guide">Back</button>
   </section>
 
   <!-- SETTINGS -->
   <section id="screen-settings" class="screen">
     <h2>Privacy and settings</h2>
     <div class="notice">
-      <b>Where your video goes: nowhere.</b> The clip is opened by the browser on this device, the pose model runs here, and only the scores (a few numbers and a date) are kept in this browser's storage. Close the tab and the video is gone.
+      <b>Where your video goes: nowhere.</b> The clip is opened by the browser on this device, the pose model runs here, and only the scores (a few numbers and a date) are kept in this browser's storage. Close the tab and the video is gone. The live camera is never recorded. A shared link carries numbers only.
     </div>
     <h3>Consent</h3>
     <p>Film only swimmers you are responsible for, or who have agreed. For anyone under 18 that means a parent or guardian is doing the filming or has said yes. Do not film other people's children in the background if you can avoid it, and never share a clip without asking.</p>
     <h3>Your data</h3>
     <p id="dataSummary" class="fine"></p>
-    <button id="btnClear" class="btn danger" type="button">Delete all scored laps on this device</button>
+    <div id="swimmerManage" class="list"></div>
+    <button id="btnClear" class="btn danger" type="button">Delete everything on this device</button>
     <h3>Credits</h3>
-    <p class="fine">Built for the 2026 Congressional App Challenge by the SafeDive team, Cary, North Carolina. It grew out of our drowning-detection research project. Pose model: Ultralytics YOLO11-pose (AGPL-3.0). Runtime: onnxruntime-web (MIT). All photos are our own. Version <span id="versionTag"></span>.</p>
-    <button class="btn ghost" type="button" data-go="evidence">Back</button>
+    <p class="fine">Built for the 2026 Congressional App Challenge by the SafeDive team, Cary, North Carolina. It grew out of our drowning-detection research project. Pose model: Ultralytics YOLO11-pose (AGPL-3.0). Runtime: onnxruntime-web (MIT). Water-competency skills: American Red Cross. All photos are our own. Version <span id="versionTag"></span>.</p>
+    <button class="btn ghost" type="button" data-go="guide">Back</button>
   </section>
 
 </main>
 
 <nav class="tabs" aria-label="Main" role="tablist">
   <button type="button" role="tab" aria-selected="true" data-tab="home" class="on"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Score</button>
-  <button type="button" role="tab" aria-selected="false" tabindex="-1" data-tab="guide"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Learn</button>
+  <button type="button" role="tab" aria-selected="false" tabindex="-1" data-tab="live"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>Live</button>
+  <button type="button" role="tab" aria-selected="false" tabindex="-1" data-tab="safety"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v5M12 16v5M3 12h5M16 12h5"/></svg>Safety</button>
   <button type="button" role="tab" aria-selected="false" tabindex="-1" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6 16v-5M11 16V8M16 16v-3M21 16V5" /></svg>Progress</button>
-  <button type="button" role="tab" aria-selected="false" tabindex="-1" data-tab="evidence"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>About</button>
+  <button type="button" role="tab" aria-selected="false" tabindex="-1" data-tab="guide"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Learn</button>
 </nav>
+
+<div id="toast" class="toast" hidden></div>
 
 <!-- first-run consent sheet -->
 <div id="consentSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="consentTitle" hidden>
@@ -233,8 +339,14 @@
 <script src="js/scoring.js"></script>
 <script src="js/drills.js"></script>
 <script src="js/examples.js"></script>
+<script src="js/store.js"></script>
+<script src="js/badges.js"></script>
+<script src="js/safety.js"></script>
+<script src="js/plan.js"></script>
+<script src="js/share.js"></script>
 <script src="js/draw.js"></script>
 <script src="js/report.js"></script>
+<script src="js/live.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

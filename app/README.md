@@ -7,10 +7,22 @@ Built for the 2026 Congressional App Challenge by the SafeDive team. It grew out
 drowning-detection research project: same idea (skeleton keypoints from video, then simple
 geometry), pointed at swim lessons instead of emergencies.
 
-What is in the app: score a lap; step through the frames the score used (skeleton, target line,
-angle chart); one drill per tip; progress with levels and a streak; a filming guide built from our
-own footage; "What the app sees", which runs the model live on real frames; the 31-clip study as a
-chart you can tap; a first-run consent sheet; report card image and JSON export. Product documents
+What is in the app (v0.4), behind five tabs:
+
+- **Score.** Pick a clip, the model reads it on the phone, you get a 0 to 100 score, three parts, one tip
+  and one drill. Step through the frames it used (skeleton, target line, angle chart). Save a report card,
+  copy the JSON, share the lap as a link (numbers only, no server), or make a one-week practice plan with
+  calendar export. Swimmers are profiles, drawn as round ink stamps.
+- **Live.** The camera runs through the same model a few times a second: a body-line dial against the
+  water line, a state word, one cue, optionally spoken. Nothing is recorded.
+- **Safety.** The five American Red Cross water-competency skills per swimmer. Four a parent signs off;
+  the one-minute float or tread the camera can time (live, or from a clip). All five earns a water-safe card.
+- **Progress.** Levels, week streak, ten badges computed from the data, tappable history, compare two laps
+  (two angle lines, where they cross the ink prints green).
+- **Learn.** The filming guide from our own footage; "What the app sees", which runs the model live on real
+  frames; the 31-clip study as a chart you can tap; privacy and settings.
+
+It installs to the home screen and works offline (the service worker caches the model). Product documents
 (brief, spec, flows, wireframes, schema, privacy, handoff, usability plan) are in `docs/`.
 
 ## Run it

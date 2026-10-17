@@ -69,3 +69,20 @@ The template asked for 3 to 5 clip ranges per issue. The record gives the raw ma
   "metrics": { "torsoAngleDeg": 16, "headLift": 0.3, "strokeRateSpm": 48 },
   "score": { "total": 89, "word": "Strong lap" }, "issues": ["hips_slightly_low", "head_ok", "rhythm_ok"], "refused": null }
 ```
+
+
+## What is stored on the device (v0.4, `js/store.js`)
+
+| Key | Shape |
+|---|---|
+| `safedive.swimmers.v1` | `[{ id, name, ink (0..3), created }]` |
+| `safedive.sessions.v1` | `[{ id, date, swimmerId, swimmer, stroke, score, torsoAngle, readable, issues, parts: { body, head, rhythm }, fps, timeline: [deg or null per sampled frame], drillDone }]` |
+| `safedive.skills.v1` | `{ [swimmerId]: { enter | float | turn | swim | exit: { date (YYYY-MM-DD), how: 'parent' or 'app', seconds } } }` |
+| `safedive.plan.v1` | `{ swimmerId, created, drillKey, items: [{ day (YYYY-MM-DD), kind: 'drill' or 'film', text, done }] }` |
+| `safedive.settings.v1` | `{ voice, installDismissed }` |
+
+Laps written by v0.2/v0.3 (name only, no id) are upgraded once by `store.migrate()`: each distinct name becomes a swimmer.
+
+## A lap as a link (`js/share.js`)
+
+`#lap=<base64url JSON>` with `v: 1`, date, swimmer name, stroke, readable fraction, scored seconds, score, parts `[key, pts, max, value]`, tips, issue keys, median body angle, and the body-angle line downsampled to about 60 `[t, deg or null, moving]` points. About 1.2 KB. Nothing else travels.

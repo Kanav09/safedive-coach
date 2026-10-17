@@ -161,3 +161,72 @@ function drawStudyChart(cv, clips, selected) {
 }
 
 if (typeof module !== 'undefined') module.exports = { BONES, drawSkeleton, drawTargetLine, drawLabel };
+
+// ---- live dial: the body line drawn against the water line, like a protractor on the pool edge ----
+// 0° is the water (horizontal, to the right), 90° straight up. Aqua wedge = flat zone (0..15), pale = acceptable (15..30).
+// The needle is orange ink multiplied over the wedge, so inside the flat zone it prints green: the same overprint rule as every meter.
+function drawDial(cv, angle, opts = {}) {
+  const cssW = cv.clientWidth || 360;
+  const { ctx, W, H, k } = fitCanvas(cv, opts.height || Math.round(Math.min(280, cssW * 0.62)));
+  ctx.clearRect(0, 0, W, H); ctx.fillStyle = cssVar('--paper-bright', '#fffdf7'); ctx.fillRect(0, 0, W, H);
+  const pad = 16 * k, cx = pad + 10 * k, cy = H - pad - 10 * k, R = Math.min(W - cx - 64 * k, cy - pad - 18 * k);
+  const rad = d => -d * Math.PI / 180;
+  const wedge = (from, to, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, R, rad(from), rad(to), true); ctx.closePath(); ctx.fill(); };
+  wedge(THRESHOLDS.bodyLine.great, THRESHOLDS.bodyLine.ok, cssVar('--aqua-pale', '#cfeaf1'));
+  wedge(0, THRESHOLDS.bodyLine.great, cssVar('--aqua', '#00a6c8'));
+  // protractor ticks every 15°, labels at 0 / 30 / 60 / 90
+  ctx.strokeStyle = cssVar('--ink', '#1a1a1a'); ctx.fillStyle = cssVar('--ink-2', '#4f4b43'); ctx.font = `700 ${11 * k}px ${FONT_BODY}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let d = 0; d <= 90; d += 15) { const a = rad(d), big = d % 30 === 0; ctx.lineWidth = (big ? 2 : 1) * k; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * (R - (big ? 12 : 7) * k), cy + Math.sin(a) * (R - (big ? 12 : 7) * k)); ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); ctx.stroke();
+    if (big && d > 0) ctx.fillText(d + '°', cx + Math.cos(a) * (R + 14 * k), cy + Math.sin(a) * (R + 14 * k)); }
+  // the water line
+  ctx.lineWidth = 3 * k; ctx.strokeStyle = cssVar('--ink', '#1a1a1a'); ctx.beginPath(); ctx.moveTo(cx - 8 * k, cy); ctx.lineTo(cx + R + 22 * k, cy); ctx.stroke();
+  ctx.fillStyle = cssVar('--ink-2', '#4f4b43'); ctx.textAlign = 'left'; ctx.font = `700 ${10 * k}px ${FONT_BODY}`; ctx.fillText('WATER', cx + R + 26 * k, cy);
+  if (angle !== null && angle !== undefined) {
+    const a = rad(Math.max(0, Math.min(90, angle)));
+    ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.strokeStyle = cssVar('--sun', '#ff6a2a'); ctx.lineWidth = 7 * k; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * R * 0.92, cy + Math.sin(a) * R * 0.92); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = cssVar('--ink', '#1a1a1a'); ctx.beginPath(); ctx.arc(cx, cy, 6 * k, 0, Math.PI * 2); ctx.fill();
+  }
+  // big number in the free corner
+  ctx.fillStyle = cssVar('--ink', '#1a1a1a'); ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.font = `800 ${44 * k}px ${FONT_DISPLAY}`;
+  ctx.fillText(angle === null || angle === undefined ? '–' : Math.round(angle) + '°', W - pad, pad);
+  ctx.font = `700 ${11 * k}px ${FONT_BODY}`; ctx.fillStyle = cssVar('--ink-2', '#4f4b43'); ctx.fillText('BODY LINE', W - pad, pad + 48 * k);
+}
+
+// ---- compare two laps: lap A in orange, lap B in aqua, over the flat band; where the lines cross they print green ----
+function drawCompareChart(cv, a, b) {
+  const { ctx, W, H, k } = fitCanvas(cv, 170);
+  const padL = 34 * k, padR = 10 * k, padT = 10 * k, padB = 22 * k;
+  const tmax = Math.max((a.timeline || []).length / (a.fps || 8), (b.timeline || []).length / (b.fps || 8), 1);
+  const xOf = t => padL + (W - padL - padR) * t / tmax, yOf = deg => padT + (H - padT - padB) * (1 - deg / 90);
+  ctx.clearRect(0, 0, W, H); ctx.fillStyle = cssVar('--paper-bright', '#fffdf7'); ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = cssVar('--aqua-pale', '#cfeaf1'); ctx.fillRect(padL, yOf(THRESHOLDS.bodyLine.great), W - padL - padR, yOf(0) - yOf(THRESHOLDS.bodyLine.great));
+  ctx.strokeStyle = cssVar('--hair', 'rgba(26,26,26,.22)'); ctx.lineWidth = k; ctx.font = `${12 * k}px ${FONT_BODY}`; ctx.fillStyle = cssVar('--ink-2', '#4f4b43'); ctx.textBaseline = 'middle';
+  for (const deg of [0, 30, 60, 90]) { const y = yOf(deg); ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke(); ctx.textAlign = 'right'; ctx.fillText(deg + '°', padL - 6 * k, y); }
+  ctx.textAlign = 'left'; for (let t = 0; t <= tmax; t += tmax > 12 ? 5 : 2) ctx.fillText(t + 's', xOf(t), H - padB / 2);
+  const line = (s, col) => { const fps = s.fps || 8; ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.strokeStyle = col; ctx.lineWidth = 3 * k; ctx.lineJoin = 'round'; ctx.beginPath(); let pen = false;
+    (s.timeline || []).forEach((v, i) => { if (v === null) { pen = false; return; } const x = xOf(i / fps), y = yOf(v); if (pen) ctx.lineTo(x, y); else ctx.moveTo(x, y); pen = true; }); ctx.stroke(); ctx.restore(); };
+  line(a, cssVar('--sun', '#ff6a2a')); line(b, cssVar('--aqua', '#00a6c8'));
+}
+
+// A square share card for the five water-safety skills: the stamp, the swimmer, five rules ticked or not.
+function drawSafetyCard(swimmer, skills, SKILLS) {
+  const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
+  const paper = '#f6f1e4', ink = '#1a1a1a', ink2 = '#4f4b43', aqua = '#00a6c8', sun = '#ff6a2a', over = '#004521';
+  ctx.fillStyle = paper; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = aqua; ctx.fillRect(0, 0, W, 300); ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = sun; ctx.fillRect(0, 200, W, 160); ctx.restore();
+  ctx.fillStyle = paper; ctx.font = `800 120px ${FONT_DISPLAY}`; ctx.textBaseline = 'alphabetic'; ctx.fillText('WATER SAFE', 60, 180);
+  ctx.fillStyle = ink; ctx.font = `700 40px ${FONT_BODY}`; ctx.fillText(`${swimmer ? swimmer.name : 'Swimmer'} · ${new Date().toLocaleDateString()}`, 60, 440);
+  let y = 540; const done = SKILLS.filter(s => skills[s.key]).length;
+  for (const s of SKILLS) {
+    const e = skills[s.key];
+    ctx.fillStyle = e ? over : paper; ctx.strokeStyle = ink; ctx.lineWidth = 5; ctx.fillRect(60, y - 44, 56, 56); ctx.strokeRect(60, y - 44, 56, 56);
+    if (e) { ctx.strokeStyle = paper; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(74, y - 16); ctx.lineTo(86, y - 2); ctx.lineTo(106, y - 32); ctx.stroke(); }
+    ctx.fillStyle = ink; ctx.font = `800 40px ${FONT_DISPLAY}`; ctx.fillText(s.name, 144, y);
+    ctx.fillStyle = ink2; ctx.font = `400 28px ${FONT_BODY}`; ctx.fillText(e ? (e.how === 'app' ? `Verified by the camera: ${e.seconds} s at the surface, ${e.date}` : `Seen by a parent, ${e.date}`) : 'Not yet', 144, y + 40);
+    y += 130;
+  }
+  ctx.fillStyle = ink; ctx.font = `800 60px ${FONT_DISPLAY}`; ctx.fillText(`${done} of ${SKILLS.length} skills`, 60, H - 140);
+  ctx.fillStyle = ink2; ctx.font = `400 24px ${FONT_BODY}`; ctx.fillText('The five water-competency skills (American Red Cross). SafeDive Coach · not a safety device · an adult always watches the water', 60, H - 60);
+  return cv;
+}

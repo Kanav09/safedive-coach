@@ -65,3 +65,23 @@ Manual, before any release, on a real phone over Wi-Fi (`http://<laptop-ip>:8765
 - [ ] Thresholds (`THRESHOLDS` in scoring.js) unchanged since the last instructor check, or re-checked.
 - [ ] `APP_VERSION` bumped in report.js and package.json; README "Run it" still correct.
 - [ ] Licence notes present (YOLO11 AGPL-3.0, onnxruntime-web MIT); photos are ours.
+
+## v0.4 additions (2026-10-17)
+
+New files, each with one job and a plain-Node unit test where it has pure logic:
+
+| File | Job | Test |
+|---|---|---|
+| `js/store.js` | everything kept in `localStorage`: swimmers, laps, skills, plan, settings; one-time migration of v0.2 laps | `test/store.test.js` |
+| `js/badges.js` | ten badges, computed from stored data (never stored) | `test/badges.test.js` |
+| `js/safety.js` | the five Red Cross water-competency skills; `floatTest()` times a float or tread from per-frame metrics, forgiving two-second gaps | `test/safety.test.js` |
+| `js/plan.js` | a three-item week from one scored lap; `.ics` export | `test/plan.test.js` |
+| `js/share.js` | a lap packed into `#lap=` (base64url JSON, numbers only) and back | `test/share.test.js` |
+| `js/live.js` | live camera loop; pure `liveState` / `liveCue` / `HoldCounter`; browser class `LiveCoach` | `test/live.test.js` |
+| `draw.js` (+) | `drawDial` (body line against the water), `drawCompareChart`, `drawSafetyCard` | visual |
+| `sw.js` | service worker: heavy files cache-first, everything else network-first with cache fallback | manual |
+| `assets/icon*.{svg,png}` | the mark; PNGs rendered from the SVG with headless Chrome + sips | – |
+
+Screens: `home`, `live`, `safety`, `floatresult`, `examples`, `guide`, `analyze`, `results`, `drill`, `progress`, `compare`, `evidence`, `settings`; tabs Score / Live / Safety / Progress / Learn. `?screen=name` opens any of them; `?sample=path&mode=float` runs the float test on a clip.
+
+Things that need a real device to finish testing: the live camera (Chrome asks for permission; the laptop webcam works for the dial), the float test with a swimmer, the share sheet on iOS, and the install banner on a phone. During development, the service worker can serve stale files after an edit: in DevTools > Application > Service Workers tick "Update on reload", or unregister it.

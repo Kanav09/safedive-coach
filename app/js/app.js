@@ -1,58 +1,121 @@
-// SafeDive Coach: screens, the analysis loop, results, progress. Everything else is a small module:
+// SafeDive Coach: screens and wiring. Everything else is a small module with one job:
 //   pose_yolo.js (model) -> metrics.js (keypoints to numbers) -> scoring.js (numbers to score + tips)
 //   draw.js (canvas), drills.js (what to practise), examples.js (real frames), report.js (JSON + report card)
+//   store.js (what is kept on the device), badges.js, safety.js (water-safety skills + float test),
+//   plan.js (one-week plan + calendar), share.js (a lap as a link), live.js (camera, dial, cues)
 
 const $ = id => document.getElementById(id);
-const STORE_KEY = 'safedive.sessions.v1', CONSENT_KEY = 'safedive.consent.v1', NAME_KEY = 'safedive.name';
 const POSE_MODEL = 'models/yolo/yolo11n-pose.onnx', POSE_INPUT = 640;
-const MAX_SECONDS = 30;                       // longest stretch of a clip we analyse
+const MAX_SECONDS = 30;                       // longest stretch of a lap clip we analyse
+const FLOAT_MAX_SECONDS = 95;                 // the float test needs a full minute plus slack
+const store = makeStore();
+store.migrate();
 
 let detector = null, detectorLoading = null;
 let cancelFlag = false;
 let lastRun = null;                           // the most recent analysed lap (see analyze())
 let scratch = null;                           // offscreen canvas for reading pixels
 let studyClips = null;                        // assets/study_clips.json, loaded on first visit to About
+let live = null, liveTest = null;             // LiveCoach instance; liveTest = { seconds } while a float test runs
+let currentDrillKey = null;
+let deferredInstall = null;
 
-// ---------- storage ----------
-function loadSessions() { try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]'); } catch (e) { return []; } }
-function saveSessions(s) { try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch (e) { /* private mode: nothing persists, app still works */ } }
-function getItem(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
-function setItem(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+const esc = s => String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// a bare YYYY-MM-DD is a calendar day, not a UTC instant: parse it as local so Oct 17 never prints as Oct 16
+const asDate = d => (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) ? new Date(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) : new Date(d);
+const fmtDate = (d, o) => asDate(d).toLocaleDateString(undefined, o || { month: 'short', day: 'numeric' });
 
 // ---------- screens and tabs ----------
-const TAB_OF = { home: 'home', examples: 'guide', guide: 'guide', analyze: 'home', results: 'home', drill: 'home', progress: 'progress', evidence: 'evidence', settings: 'evidence' };
+const TAB_OF = { home: 'home', analyze: 'home', results: 'home', drill: 'home', live: 'live', safety: 'safety', floatresult: 'safety', progress: 'progress', compare: 'progress', guide: 'guide', examples: 'guide', evidence: 'guide', settings: 'guide' };
 function show(name, opts = {}) {
+  if (live && live.running && name !== 'live') stopLive();
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + name));
   document.querySelectorAll('.tabs button').forEach(b => { const on = b.dataset.tab === TAB_OF[name]; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
   window.scrollTo(0, 0);
   // keyboard and screen-reader users land on the new screen's heading instead of staying on a button that just vanished
   if (opts.focus !== false) { const scr = $('screen-' + name), h = scr.querySelector('h1, h2') || scr; h.tabIndex = -1; h.focus({ preventScroll: true }); }
   if (name === 'home') refreshHome();
+  if (name === 'live') prepareLive(opts.test || null);
+  if (name === 'safety') renderSafety();
   if (name === 'progress') renderProgress();
+  if (name === 'compare') renderCompare();
   if (name === 'evidence') renderEvidence();
   if (name === 'settings') renderSettings();
   if (name === 'examples') buildExamples();
 }
+// Say something to screen readers without showing anything (the live region is visually hidden). Cleared first so a repeat is re-read.
+function announce(msg) { const el = $('live'); el.textContent = ''; requestAnimationFrame(() => { el.textContent = msg; }); }
+// A short visible note at the bottom of the screen, like a toast, that also reaches screen readers.
+let toastTimer = null;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; t.classList.add('show'); announce(msg); clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.classList.remove('show'); setTimeout(() => { t.hidden = true; }, 200); }, 3200); }
+function showError(msg) { show('home'); const box = $('homeError'); box.textContent = msg; box.hidden = false; }
 
+// ---------- swimmers ----------
+function activeSwimmer() { return store.currentSwimmer(); }
+function renderSwimmerRows() { ['swimRowHome', 'swimRowSafety', 'swimRowProgress'].forEach(id => renderSwimmerRow($(id))); }
+function renderSwimmerRow(host) {
+  if (!host) return;
+  const list = store.swimmers(), cur = activeSwimmer();
+  host.innerHTML = list.map(s => `<button type="button" class="stamp ink${s.ink}${cur && cur.id === s.id ? ' on' : ''}" data-id="${s.id}" aria-pressed="${!!(cur && cur.id === s.id)}"><b>${esc(s.name[0].toUpperCase())}</b><span>${esc(s.name)}</span></button>`).join('')
+    + `<button type="button" class="stamp add" data-add-swimmer><b>+</b><span>${list.length ? 'Add' : 'Add swimmer'}</span></button>`;
+  host.querySelectorAll('[data-id]').forEach(b => b.onclick = () => { store.setCurrentSwimmer(b.dataset.id); refreshAll(); });
+}
+function openAddSwimmer() { show('home'); $('addSwimmerForm').hidden = false; $('addSwimmerName').value = ''; $('addSwimmerName').focus(); }
+function refreshAll() {
+  renderSwimmerRows();
+  const on = document.querySelector('.screen.active').id.replace('screen-', '');
+  if (on === 'home') refreshHome(); if (on === 'safety') renderSafety(); if (on === 'progress') renderProgress();
+}
+function badgesFor(swimmerId) {
+  const plan = store.plan();
+  return earnedBadges({ sessions: store.sessionsFor(swimmerId), skills: swimmerId ? store.skillsFor(swimmerId) : {}, plan: plan && (!swimmerId || plan.swimmerId === swimmerId) ? plan : null });
+}
+// Run a change that may earn a badge, and say so if it did.
+function withBadges(swimmerId, change) {
+  const before = badgesFor(swimmerId); change(); const after = badgesFor(swimmerId);
+  const fresh = after.filter(k => !before.includes(k));
+  if (fresh.length) { const b = BADGES.find(x => x.key === fresh[0]); setTimeout(() => toast(`New badge: ${b.name}${fresh.length > 1 ? ` and ${fresh.length - 1} more` : ''}`), 600); }
+}
+
+// ---------- home ----------
 function refreshHome() {
-  const s = loadSessions();
+  const sw = activeSwimmer(), s = store.sessionsFor(sw ? sw.id : null);
+  $('swimmerHint').textContent = sw ? '' : (store.swimmers().length ? 'Tap a name' : 'Laps and skills are kept per child');
   $('statSessions').textContent = s.length;
   $('statStreak').textContent = weekStreak(s);
   $('statBest').textContent = s.length ? Math.max(...s.map(x => x.score)) : '–';
   $('levelPill').textContent = levelFor(s.length).name;
-  $('swimmerName').value = getItem(NAME_KEY) || '';
-  // the last scored lap as one overprint meter: orange score over the aqua strong-lap zone (80 and up)
   const last = s[s.length - 1], lap = $('lastLap');
   if (last) {
     const angle = last.torsoAngle === null || last.torsoAngle === undefined ? '' : ` · body line ${last.torsoAngle.toFixed(0)}° from flat`;
-    $('lastLapText').innerHTML = `Last lap <b>${last.score}</b> · ${last.swimmer ? last.swimmer + ' · ' : ''}${new Date(last.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}${angle}`;
+    $('lastLapText').innerHTML = `Last lap <b>${last.score}</b> · ${last.swimmer ? esc(last.swimmer) + ' · ' : ''}${fmtDate(last.date)}${angle}`;
     $('lastLapFill').style.setProperty('--w', `${last.score}%`);
     lap.hidden = false;
   } else lap.hidden = true;
+  // safety line
+  const done = sw ? skillsDone(store.skillsFor(sw.id)) : 0;
+  $('safetyLineText').textContent = sw ? (done === SKILLS.length ? `${sw.name} has all five skills signed off.` : `${sw.name}: ${done} of ${SKILLS.length} skills signed off.`) : 'Five skills, signed off by you or checked by the camera.';
+  $('safetyFill').style.setProperty('--w', `${Math.round(100 * done / SKILLS.length)}%`);
+  renderPlanCard();
 }
-function showError(msg) { show('home'); const box = $('homeError'); box.textContent = msg; box.hidden = false; }
-// Say something to screen readers without showing anything (the live region is visually hidden). Cleared first so a repeat is re-read.
-function announce(msg) { const el = $('live'); el.textContent = ''; requestAnimationFrame(() => { el.textContent = msg; }); }
+function renderPlanCard() {
+  const plan = store.plan(), card = $('planCard');
+  if (!plan) { card.hidden = true; return; }
+  card.hidden = false;
+  const sw = plan.swimmerId ? store.swimmer(plan.swimmerId) : null, done = plan.items.filter(i => i.done).length;
+  $('planMeta').textContent = `${sw ? sw.name + ' · ' : ''}${done} of ${plan.items.length} done`;
+  $('planList').innerHTML = plan.items.map((it, i) => `<li class="${it.done ? 'done' : ''}"><label class="toggle"><input type="checkbox" data-i="${i}" ${it.done ? 'checked' : ''}><span><b>${fmtDate(it.day, { weekday: 'short', month: 'short', day: 'numeric' })}</b> ${esc(it.text)}</span></label></li>`).join('');
+  $('planList').querySelectorAll('input').forEach(cb => cb.onchange = () => {
+    const p = store.plan(); p.items[+cb.dataset.i].done = cb.checked;
+    withBadges(p.swimmerId, () => store.savePlan(p));
+    renderPlanCard(); if (p.items.every(i => i.done)) toast('Plan finished. Nice week.');
+  });
+}
+function makePlanFrom(issueKey, swimmerId) {
+  const plan = makePlan(issueKey, issueKey ? DRILLS[issueKey] : null, swimmerId);
+  store.savePlan(plan); toast('Plan made. It is on the Score tab.'); show('home');
+}
+function downloadText(text, name, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
 
 // ---------- pose model ----------
 async function getDetector(note = () => {}) {
@@ -135,12 +198,14 @@ function seekTo(video, t) {
 }
 function fmtEta(sec) { return sec < 1 ? 'almost' : sec < 60 ? `${Math.round(sec)} s` : `${Math.ceil(sec / 60)} min`; }
 
-async function analyze(src, stroke, swimmer) {
+// mode 'lap' scores a lap (scoring.js); mode 'float' times the swimmer at the surface for the safety minute (safety.js)
+async function analyze(src, stroke, swimmer, mode = 'lap') {
   cancelFlag = false;
   show('analyze');
+  $('analyzeTitle').textContent = mode === 'float' ? 'Timing the float' : 'Reading the swimmer';
   const video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d');
   const note = t => { $('analyzeNote').textContent = t; };
-  $('bar').style.width = '0%'; $('readNow').textContent = '–'; $('readFrac').textContent = '0%'; $('readEta').textContent = '…';
+  $('bar').style.width = '0%'; $('progressBar').setAttribute('aria-valuenow', 0); $('readNow').textContent = '–'; $('readFrac').textContent = '0%'; $('readEta').textContent = '…';
   drawReadabilityStrip($('strip'), [], null, 1);
   const det = await getDetector(note);
 
@@ -152,14 +217,14 @@ async function analyze(src, stroke, swimmer) {
     video.onerror = () => { clearTimeout(timer); rej(new Error('Could not open that video.')); };
   });
   canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-  const duration = Math.min(video.duration || 0, MAX_SECONDS);
+  const duration = Math.min(video.duration || 0, mode === 'float' ? FLOAT_MAX_SECONDS : MAX_SECONDS);
   if (!duration) throw new Error('That video has no length. Try recording again.');
 
   // warm-up frame decides the sampling rate: fast devices get 8 frames a second, slow ones 4, so nobody waits minutes
   await seekTo(video, 0);
   let t0 = performance.now(); await det.run(video.videoWidth, video.videoHeight, pixelsFrom(video));
   const warmMs = performance.now() - t0;
-  const fps = warmMs > 450 ? 4 : 8;
+  const fps = mode === 'float' ? 4 : (warmMs > 450 ? 4 : 8);
   const total = Math.floor(duration * fps);
   const perFrame = [], keypoints = [], times = [];
   let best = null, spent = 0;
@@ -192,14 +257,18 @@ async function analyze(src, stroke, swimmer) {
     $('bar').style.width = `${pct}%`; $('progressBar').setAttribute('aria-valuenow', pct);
     drawReadabilityStrip($('strip'), perFrame, null, total);
   }
+  if (mode === 'float') { finishFloat(floatTest(perFrame, fps), 'clip', swimmer); return null; }
+
   const summary = clipSummary(perFrame, fps);
   const result = scoreClip(summary, stroke, fps);
   const moving = markMoving(perFrame, fps);
-  lastRun = { summary, result, perFrame, keypoints, times, moving, best, stroke, swimmer, src, fps, date: new Date().toISOString() };
+  lastRun = { summary, result, perFrame, keypoints, times, moving, best, stroke, swimmer: swimmer ? swimmer.name : '', swimmerId: swimmer ? swimmer.id : null, src, fps, date: new Date().toISOString(), sessionId: null };
   if (result.ok) {
-    const s = loadSessions();
-    s.push({ date: lastRun.date, swimmer, stroke, score: result.score, torsoAngle: summary.torsoAngle, readable: summary.readableFrac, issues: result.issues });
-    saveSessions(s);
+    const parts = {}; result.parts.forEach(p => { parts[p.key] = p.pts; });
+    withBadges(lastRun.swimmerId, () => {
+      const rec = store.addSession({ date: lastRun.date, swimmerId: lastRun.swimmerId, swimmer: lastRun.swimmer, stroke, score: result.score, torsoAngle: summary.torsoAngle, readable: summary.readableFrac, issues: result.issues, parts, fps, timeline: perFrame.map(m => (m ? +m.torsoAngle.toFixed(1) : null)) });
+      lastRun.sessionId = rec.id;
+    });
   }
   show('results');                 // charts need their real width, so the screen is shown before drawing
   renderResults();
@@ -210,30 +279,35 @@ async function analyze(src, stroke, swimmer) {
 // ---------- results ----------
 let chartHit = null;
 function renderResults() {
-  const { summary, result, perFrame, times, moving, best, stroke, swimmer, fps } = lastRun;
+  const { summary, result, perFrame, times, moving, best, stroke, swimmer, fps, shared } = lastRun;
+  $('sharedBanner').hidden = !shared; $('resStageWrap').hidden = !!shared;
+  $('btnSaveCard').hidden = !!shared; $('btnCopyJson').hidden = !!shared; $('btnShareLink').hidden = !!shared; $('shareBox').hidden = true;
+  $('btnAgain').textContent = shared ? 'Score your own lap' : 'Score another lap';
   $('resHeader').textContent = `${swimmer ? swimmer + ' · ' : ''}${STROKES[stroke] || stroke} · ${new Date(lastRun.date).toLocaleDateString()}`;
   const scoreEl = $('resScore'), refuse = $('resRefuse'), parts = $('resParts'), tips = $('resTips');
   if (!result.ok) {
     scoreEl.hidden = true; parts.innerHTML = ''; tips.innerHTML = '';
     refuse.hidden = false;
-    refuse.innerHTML = `<b>Not scored.</b> ${result.reason}<br><span class="fine">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames, travelling in ${Math.round(summary.movingFrac * 100)}%. The app refuses to guess rather than give a number it cannot stand behind. <a href="#" data-go="guide">How to film</a>.</span>`;
-    $('btnSaveCard').disabled = false; $('btnCopyJson').disabled = false;
+    refuse.innerHTML = `<b>Not scored.</b> ${esc(result.reason)}<br><span class="fine">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames, travelling in ${Math.round(summary.movingFrac * 100)}%. The app refuses to guess rather than give a number it cannot stand behind. <a href="#" data-go="guide">How to film</a>.</span>`;
+    $('btnMakePlan').hidden = true;
   } else {
-    refuse.hidden = true; scoreEl.hidden = false;
+    refuse.hidden = true; scoreEl.hidden = false; $('btnMakePlan').hidden = false;
     const cls = result.score >= 80 ? 'good' : result.score >= 55 ? 'warn' : 'bad';
-    scoreEl.innerHTML = `<div class="num ${cls}">${result.score}</div><div><div class="word">${scoreWord(result.score)}</div><div class="conf">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames · ${(summary.scoredFrames / fps).toFixed(1)} s of swimming scored</div></div>`;
+    const secs = shared ? summary.scoredFrames : summary.scoredFrames / fps;
+    scoreEl.innerHTML = `<div class="num ${cls}">${result.score}</div><div><div class="word">${scoreWord(result.score)}</div><div class="conf">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames · ${secs.toFixed(1)} s of swimming scored</div></div>`;
     parts.innerHTML = result.parts.map(p => { const f = p.pts / p.max, fill = f >= 0.8 ? 'var(--good)' : f >= 0.5 ? 'var(--warn)' : 'var(--bad)';
-      return `<div class="part"><span class="name">${p.name}</span><span class="pts">${p.pts}<span class="fine">/${p.max}</span></span><span class="val">${p.value}</span><span class="meter"><i style="--w:${Math.round(f * 100)}%;--fill:${fill}"></i></span></div>`; }).join('');
+      return `<div class="part"><span class="name">${p.name}</span><span class="pts">${p.pts}<span class="fine">/${p.max}</span></span><span class="val">${esc(p.value)}</span><span class="meter"><i style="--w:${Math.round(f * 100)}%;--fill:${fill}"></i></span></div>`; }).join('');
     // one tip, one drill: the first tip that has a drill leads, full size; the rest follow smaller
     let lead = false;
     tips.innerHTML = result.tips.map((t, i) => { const d = drillFor(result.issues[i]); const cls = d ? (lead ? 'fix' : 'fix lead') : 'ok'; if (d) lead = true;
-      return `<li class="${cls}"><span>${t}</span>${d ? `<button class="btn secondary sm" type="button" data-drill="${result.issues[i]}">Drill: ${d.name}</button>` : ''}</li>`; }).join('');
+      return `<li class="${cls}"><span>${esc(t)}</span>${d ? `<button class="btn secondary sm" type="button" data-drill="${result.issues[i]}">Drill: ${d.name}</button>` : ''}</li>`; }).join('');
     tips.querySelectorAll('[data-drill]').forEach(b => b.onclick = () => openDrill(b.dataset.drill));
   }
-  // frame stepper
-  const scrub = $('scrub'); scrub.max = Math.max(times.length - 1, 0); scrub.value = best ? best.index : 0;
-  drawResultFrame(+scrub.value);
-  chartHit = drawAngleChart($('angleChart'), perFrame, times, moving, +scrub.value);
+  if (!shared) {
+    const scrub = $('scrub'); scrub.max = Math.max(times.length - 1, 0); scrub.value = best ? best.index : 0;
+    drawResultFrame(+scrub.value);
+    chartHit = drawAngleChart($('angleChart'), perFrame, times, moving, +scrub.value);
+  } else chartHit = drawAngleChart($('angleChart'), perFrame, times, moving, null);
 }
 
 async function drawResultFrame(i) {
@@ -254,20 +328,23 @@ async function drawResultFrame(i) {
 
 function openDrill(key) {
   const d = DRILLS[key]; if (!d) return;
+  currentDrillKey = key;
   $('drillTitle').textContent = 'Drill: ' + d.name; $('drillWhy').textContent = d.why;
   $('drillSteps').innerHTML = d.steps.map(s => `<li>${s}</li>`).join(''); $('drillReps').textContent = 'How much: ' + d.reps;
+  const done = lastRun && lastRun.sessionId && (store.sessions().find(s => s.id === lastRun.sessionId) || {}).drillDone;
+  $('btnDrillDone').textContent = done ? 'Practised ✓' : 'We practised this'; $('btnDrillDone').disabled = !!done;
   show('drill');
 }
 
-async function saveReportCard() {
-  const card = makeReportCard(lastRun, lastRun.fps);
-  const name = `safedive-${(lastRun.swimmer || 'lap').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'lap'}-${lastRun.date.slice(0, 10)}.png`;
+// Share a canvas as a picture: the phone's share sheet when there is one, else a download.
+async function shareCanvas(card, name, title) {
   const blob = await new Promise(r => card.toBlob(r, 'image/png'));
   const file = new File([blob], name, { type: 'image/png' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'SafeDive Coach report card' }); announce('Report card shared'); return; } catch (e) { /* user closed the sheet: fall through to download */ } }
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title }); announce(title + ' shared'); return; } catch (e) { /* user closed the sheet: fall through to download */ } }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-  announce('Report card saved as ' + name);
+  toast('Saved ' + name);
 }
+function saveReportCard() { return shareCanvas(makeReportCard(lastRun, lastRun.fps), `safedive-${(lastRun.swimmer || 'lap').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'lap'}-${lastRun.date.slice(0, 10)}.png`, 'SafeDive Coach report card'); }
 async function copyJson(btn) {
   const text = JSON.stringify(resultToJSON(lastRun, lastRun.fps), null, 2);
   try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; }
@@ -275,36 +352,143 @@ async function copyJson(btn) {
   announce('Copied the result as JSON');
   setTimeout(() => { btn.textContent = 'Copy as JSON'; }, 1800);
 }
+async function shareLink() {
+  const url = `${location.origin}${location.pathname}#lap=${packLap(lastRun, lastRun.fps)}`;
+  const title = `SafeDive Coach: ${lastRun.swimmer || 'a lap'} scored ${lastRun.result.ok ? lastRun.result.score : 'not scored'}`;
+  $('shareUrl').value = url; $('shareBox').hidden = false;
+  if (navigator.share) { try { await navigator.share({ title, url }); return; } catch (e) { /* closed: fall through to copy */ } }
+  try { await navigator.clipboard.writeText(url); toast('Link copied. Only the numbers are in it.'); } catch (e) { $('shareUrl').focus(); $('shareUrl').select(); }
+}
+
+// ---------- live coach ----------
+function setupLive() {
+  live = new LiveCoach({ video: $('liveVideo'), canvas: $('liveOverlay'), getDetector: () => getDetector(t => { $('liveCue').textContent = t; }), pixelsFrom, frameMetrics, drawSkeleton, floatState });
+  live.voice = !!store.settings().voice; $('voiceToggle').checked = live.voice;
+}
+function prepareLive(test) {
+  liveTest = test;
+  $('liveTitle').textContent = test ? 'Float test' : 'Live coach';
+  $('liveIntro').textContent = test ? `The camera times how long the swimmer stays at the surface, floating or treading, in water over their head. ${test.seconds} seconds passes the skill. Keep the whole body in the shot from the side.` : 'Point the phone at the swimmer from the side. The dial shows the body line against the water as it happens, with one cue you can call out. Nothing is recorded.';
+  $('holdBox').hidden = !test; $('holdTarget').textContent = `of ${test ? test.seconds : 60} s at the surface`; $('holdSecs').textContent = '0 s'; $('holdFill').style.setProperty('--w', '0%');
+  $('liveWord').textContent = 'Camera off'; $('liveCue').textContent = 'Tap Start to turn on the camera.'; $('liveError').hidden = true;
+  $('liveAngle').textContent = '–'; $('liveFps').textContent = '–'; $('liveMs').textContent = '–';
+  drawDial($('dial'), null);
+}
+async function startLive() {
+  const btn = $('btnLiveStart'); btn.setAttribute('aria-busy', 'true'); btn.textContent = 'Starting…'; $('liveError').hidden = true;
+  try {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('This browser cannot open the camera. On a phone, use Safari or Chrome.');
+    await live.start(liveTest ? 'surface' : 'coach', {
+      seconds: liveTest ? liveTest.seconds : 60,
+      onUpdate: u => {
+        $('liveWord').textContent = u.word; $('liveCue').textContent = u.cue;
+        $('liveAngle').textContent = u.angle === null ? '–' : `${Math.round(u.angle)}°`; $('liveFps').textContent = u.fps.toFixed(1); $('liveMs').textContent = Math.round(u.ms);
+        drawDial($('dial'), u.angle);
+        if (u.held !== null) { const pct = Math.min(100, 100 * u.held / u.target); $('holdSecs').textContent = `${Math.floor(u.held)} s`; $('holdFill').style.setProperty('--w', `${pct}%`); $('holdBox').querySelector('.meter').setAttribute('aria-valuenow', Math.floor(u.held)); }
+      },
+      onDone: r => finishFloat(r, 'camera', activeSwimmer()),
+    });
+    $('liveBadge').hidden = false; btn.hidden = true; $('btnLiveStop').hidden = false;
+  } catch (e) {
+    const msg = e.name === 'NotAllowedError' ? 'Camera permission was refused. Allow the camera for this site in the browser settings and try again.' : e.name === 'NotFoundError' ? 'No camera found on this device.' : e.message;
+    $('liveError').textContent = msg; $('liveError').hidden = false;
+  }
+  btn.removeAttribute('aria-busy'); btn.textContent = 'Start camera';
+}
+function stopLive() {
+  const r = live.stop();
+  $('liveBadge').hidden = true; $('btnLiveStart').hidden = false; $('btnLiveStop').hidden = true;
+  $('liveWord').textContent = 'Camera off'; $('liveCue').textContent = 'Tap Start to turn on the camera.';
+  return r;
+}
+
+// ---------- water safety ----------
+let confirmSkill = null;              // skill key waiting for the second tap of "I watched this"
+function renderSafety() {
+  const sw = activeSwimmer();
+  $('safetyEmpty').hidden = !!sw; $('safetyBody').hidden = !sw;
+  if (!sw) return;
+  const entries = store.skillsFor(sw.id), done = skillsDone(entries);
+  $('safetyCount').textContent = `${done} of ${SKILLS.length}`;
+  $('safetyMeter').style.setProperty('--w', `${Math.round(100 * done / SKILLS.length)}%`); $('safetyMeter').parentElement.setAttribute('aria-valuenow', done);
+  $('btnSafetyCard').hidden = done < SKILLS.length;
+  $('skillList').innerHTML = SKILLS.map(s => {
+    const e = entries[s.key];
+    const status = e ? (e.how === 'app' ? `Checked by the camera: ${e.seconds} s at the surface · ${fmtDate(e.date)}` : `Signed off ${fmtDate(e.date)}`) : 'Not yet';
+    let actions;
+    if (e) actions = `<button class="btn ghost sm" type="button" data-undo="${s.key}">Undo</button>`;
+    else if (confirmSkill === s.key) actions = `<button class="btn primary sm" type="button" data-sign="${s.key}">Yes, in deep water, I watched it</button><button class="btn ghost sm" type="button" data-cancel>Cancel</button>`;
+    else actions = `<button class="btn secondary sm" type="button" data-ask="${s.key}">I watched this</button>${s.how === 'camera' ? `<button class="btn secondary sm" type="button" data-cam>Test with the camera</button><button class="btn secondary sm" type="button" data-clip>Time a clip</button>` : ''}`;
+    return `<li class="skill${e ? ' done' : ''}"><div class="skill-head"><span class="tick" aria-hidden="true"></span><b>${s.name}</b></div><p>${s.text}</p><span class="status ${e ? 'ok' : ''}">${status}</span><div class="skill-actions">${actions}</div></li>`;
+  }).join('');
+  const list = $('skillList');
+  list.querySelectorAll('[data-ask]').forEach(b => b.onclick = () => { confirmSkill = b.dataset.ask; renderSafety(); });
+  list.querySelectorAll('[data-cancel]').forEach(b => b.onclick = () => { confirmSkill = null; renderSafety(); });
+  list.querySelectorAll('[data-sign]').forEach(b => b.onclick = () => { confirmSkill = null; withBadges(sw.id, () => store.setSkill(sw.id, b.dataset.sign, { date: new Date().toISOString().slice(0, 10), how: 'parent' })); renderSafety(); toast('Signed off.'); });
+  list.querySelectorAll('[data-undo]').forEach(b => b.onclick = () => { store.setSkill(sw.id, b.dataset.undo, null); renderSafety(); });
+  list.querySelectorAll('[data-cam]').forEach(b => b.onclick = () => show('live', { test: { seconds: FLOAT.minSeconds } }));
+  list.querySelectorAll('[data-clip]').forEach(b => b.onclick = () => $('floatFile').click());
+}
+// Both ways of timing the minute end here: the camera (live.js) or a clip (analyze with mode 'float').
+function finishFloat(r, how, swimmer) {
+  const target = r.minSeconds || FLOAT.minSeconds;
+  $('floatHeader').textContent = `${swimmer ? swimmer.name + ' · ' : ''}Float test · ${how === 'camera' ? 'live camera' : 'from a clip'} · ${new Date().toLocaleDateString()}`;
+  $('floatNum').textContent = `${Math.floor(r.seconds)}`; $('floatNum').className = 'num ' + (r.pass ? 'good' : 'warn');
+  $('floatWord').textContent = r.pass ? 'Passed' : 'Not yet';
+  $('floatConf').textContent = `seconds at the surface${r.mode && r.mode !== 'surface' ? ', mostly ' + (r.mode === 'float' ? 'floating' : 'treading') : ''}${r.readableFrac !== undefined ? ` · body readable in ${Math.round(r.readableFrac * 100)}% of frames` : ''}`;
+  $('floatFill').style.setProperty('--w', `${Math.min(100, Math.round(100 * r.seconds / target))}%`);
+  if (r.pass) {
+    if (swimmer) { withBadges(swimmer.id, () => store.setSkill(swimmer.id, 'float', { date: new Date().toISOString().slice(0, 10), how: 'app', seconds: r.seconds })); $('floatNote').textContent = `${swimmer.name} stayed at the surface for ${Math.floor(r.seconds)} seconds. The skill is signed off as checked by the camera.`; }
+    else $('floatNote').textContent = 'Passed, but there is no swimmer selected to record it for. Add a swimmer on the Score tab and run it again.';
+  } else $('floatNote').textContent = r.seconds < 5 ? 'The camera could not keep the swimmer in view long enough. Film from the side, low, with the whole body in the frame, and try again.' : `The longest stretch at the surface was ${Math.floor(r.seconds)} seconds. The skill needs ${target}. Practise floating on the back with ears in the water, then try again.`;
+  show('floatresult'); announce(`Float test ${r.pass ? 'passed' : 'not passed'}: ${Math.floor(r.seconds)} seconds`);
+}
 
 // ---------- progress ----------
-let progressFilter = null, progressSelected = -1, historyHit = null;
+let progressSelected = -1, historyHit = null;
 function renderProgress() {
-  const all = loadSessions();
-  const names = [...new Set(all.map(s => s.swimmer).filter(Boolean))];
-  const chips = $('chipRow'); chips.innerHTML = '';
-  if (names.length > 1) {
-    for (const n of [null, ...names]) { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (progressFilter === n ? ' on' : ''); b.setAttribute('aria-pressed', progressFilter === n); b.textContent = n || 'Everyone'; b.onclick = () => { progressFilter = n; progressSelected = -1; renderProgress(); }; chips.appendChild(b); }
-  } else progressFilter = null;
-  const s = progressFilter ? all.filter(x => x.swimmer === progressFilter) : all;
-  const lvl = levelFor(all.length), needs = [0, 3, 8, 15, 25];
+  const sw = activeSwimmer(), s = store.sessionsFor(sw ? sw.id : null);
+  const lvl = levelFor(s.length), needs = [0, 3, 8, 15, 25];
   $('levelName').textContent = lvl.name;
-  $('levelNext').textContent = lvl.toNext === null ? 'Top level. Keep the streak going.' : `${lvl.toNext} more scored ${lvl.toNext === 1 ? 'lap' : 'laps'} to ${['Minnow', 'Otter', 'Dolphin', 'Shark'][lvl.index]}. Week streak: ${weekStreak(all)}.`;
+  $('levelNext').textContent = lvl.toNext === null ? 'Top level. Keep the streak going.' : `${lvl.toNext} more scored ${lvl.toNext === 1 ? 'lap' : 'laps'} to ${['Minnow', 'Otter', 'Dolphin', 'Shark'][lvl.index]}. Week streak: ${weekStreak(s)}.`;
   const span = lvl.toNext === null ? 1 : (needs[lvl.index + 1] - needs[lvl.index]);
-  const frac = lvl.toNext === null ? 1 : (all.length - needs[lvl.index]) / span;
+  const frac = lvl.toNext === null ? 1 : (s.length - needs[lvl.index]) / span;
   const levelPct = Math.round(100 * Math.max(0, Math.min(1, frac)));
   $('levelFill').style.setProperty('--w', `${levelPct}%`); $('levelMeter').setAttribute('aria-valuenow', levelPct);
+  // badges
+  const earned = badgesFor(sw ? sw.id : null);
+  $('badgeGrid').innerHTML = BADGES.map(b => `<div class="badge${earned.includes(b.key) ? ' on' : ''}" title="${esc(b.how)}"><span class="seal" aria-hidden="true"></span><b>${b.name}</b><span class="fine">${b.how}</span></div>`).join('');
   const last = s.slice(-12);
   historyHit = drawHistoryChart($('historyChart'), last, progressSelected >= 0 ? progressSelected - (s.length - last.length) : -1);
   const detail = $('sessionDetail');
   if (progressSelected >= 0 && s[progressSelected]) {
     const x = s[progressSelected];
     detail.hidden = false;
-    detail.innerHTML = `<b>${new Date(x.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</b> · ${x.swimmer || 'no name'} · ${STROKES[x.stroke] || x.stroke}<br>Score ${x.score} (${scoreWord(x.score)}). Body line ${x.torsoAngle === null || x.torsoAngle === undefined ? '–' : x.torsoAngle.toFixed(0) + '°'} from flat, readable in ${Math.round((x.readable || 0) * 100)}% of frames.${x.issues ? '<br><span class="fine">Worked on: ' + x.issues.filter(k => !NO_DRILL.has(k)).map(k => DRILLS[k] ? DRILLS[k].name : k).join(', ') + '</span>' : ''}`;
+    detail.innerHTML = `<b>${fmtDate(x.date, { weekday: 'short', month: 'short', day: 'numeric' })}</b> · ${esc(x.swimmer) || 'no name'} · ${STROKES[x.stroke] || x.stroke}<br>Score ${x.score} (${scoreWord(x.score)}). Body line ${x.torsoAngle === null || x.torsoAngle === undefined ? '–' : x.torsoAngle.toFixed(0) + '°'} from flat, readable in ${Math.round((x.readable || 0) * 100)}% of frames.${x.issues ? '<br><span class="fine">Worked on: ' + x.issues.filter(k => !NO_DRILL.has(k)).map(k => DRILLS[k] ? DRILLS[k].name : k).join(', ') + (x.drillDone ? ' · drill practised' : '') + '</span>' : ''}`;
     if (x.issues) { const drill = x.issues.find(k => !NO_DRILL.has(k)); if (drill) detail.innerHTML += ` <a href="#" data-drill="${drill}">Open the drill</a>`; detail.querySelectorAll('[data-drill]').forEach(a => a.onclick = ev => { ev.preventDefault(); openDrill(a.dataset.drill); }); }
   } else detail.hidden = true;
-  $('historyList').innerHTML = s.map((x, i) => `<button type="button" class="hist${i === progressSelected ? ' on' : ''}" data-i="${i}" aria-pressed="${i === progressSelected}"><div>${new Date(x.date).toLocaleDateString()} · ${x.swimmer || ''} <span>${STROKES[x.stroke] || x.stroke}</span></div><b>${x.score}</b></button>`).reverse().join('')
-    || '<div class="empty"><b>No laps scored yet</b><p>Film one lap from the side of the pool and the score shows up here.</p><button class="btn secondary" type="button" data-go="home">Score a lap</button></div>';
+  $('historyList').innerHTML = s.map((x, i) => `<button type="button" class="hist${i === progressSelected ? ' on' : ''}" data-i="${i}" aria-pressed="${i === progressSelected}"><div>${new Date(x.date).toLocaleDateString()} · ${esc(x.swimmer)} <span>${STROKES[x.stroke] || x.stroke}</span></div><b>${x.score}</b></button>`).reverse().join('')
+    || '<div class="empty"><b>No laps scored yet</b><p>Film one lap from the side of the pool and the score shows up here.</p><button class="btn secondary sm" type="button" data-go="home">Score a lap</button></div>';
   $('historyList').querySelectorAll('.hist').forEach(el => el.onclick = () => { progressSelected = +el.dataset.i; renderProgress(); });
+  $('btnCompare').hidden = s.filter(x => x.timeline).length < 2;
+}
+
+// ---------- compare two laps ----------
+function renderCompare() {
+  const sw = activeSwimmer(), s = store.sessionsFor(sw ? sw.id : null).filter(x => x.timeline);
+  const opt = (x, i) => `<option value="${x.id}">${new Date(x.date).toLocaleDateString()} · ${STROKES[x.stroke] || x.stroke} · ${x.score}</option>`;
+  const A = $('cmpA'), B = $('cmpB'); const keepA = A.value, keepB = B.value;
+  A.innerHTML = s.map(opt).join(''); B.innerHTML = s.map(opt).join('');
+  const few = s.length < 2; $('compareEmpty').hidden = !few; $('compareBody').hidden = few;
+  if (few) return;
+  A.value = s.some(x => x.id === keepA) ? keepA : s[s.length - 2].id; B.value = s.some(x => x.id === keepB) ? keepB : s[s.length - 1].id;
+  const a = s.find(x => x.id === A.value), b = s.find(x => x.id === B.value);
+  drawCompareChart($('compareChart'), a, b);
+  const row = (name, va, vb, unit, lowerBetter) => { const d = vb - va, better = lowerBetter ? d < 0 : d > 0; return `<tr><td>${name}</td><td>${va}${unit}</td><td>${vb}${unit}</td><td class="${d === 0 ? '' : better ? 'up' : 'down'}">${d > 0 ? '+' : ''}${d}${unit}</td></tr>`; };
+  const ang = x => (x.torsoAngle === null || x.torsoAngle === undefined ? null : Math.round(x.torsoAngle));
+  $('compareTable').innerHTML = `<thead><tr><th>&nbsp;</th><th>A</th><th>B</th><th>Change</th></tr></thead><tbody>${row('Score', a.score, b.score, '', false)}${ang(a) !== null && ang(b) !== null ? row('Body line', ang(a), ang(b), '°', true) : ''}${a.parts && b.parts ? row('Head', a.parts.head, b.parts.head, '', false) + row('Rhythm', a.parts.rhythm, b.parts.rhythm, '', false) : ''}</tbody>`;
+  const dAng = ang(a) !== null && ang(b) !== null ? ang(a) - ang(b) : null, dScore = b.score - a.score;
+  $('compareNote').textContent = dAng !== null && Math.abs(dAng) >= 5 ? (dAng > 0 ? `The body line is ${dAng}° flatter in lap B. That is the change the drills are for.` : `The body line dropped ${-dAng}° in lap B. Check the filming angle first, then the kick.`) : dScore >= 10 ? `Lap B scored ${dScore} points higher.` : dScore <= -10 ? `Lap B scored ${-dScore} points lower.` : 'About the same. Small differences are normal between laps.';
 }
 
 // ---------- evidence ----------
@@ -320,40 +504,87 @@ async function renderEvidence() {
 
 // ---------- settings ----------
 function renderSettings() {
-  const s = loadSessions();
-  $('dataSummary').textContent = s.length ? `${s.length} scored ${s.length === 1 ? 'lap' : 'laps'} stored on this device, the first on ${new Date(s[0].date).toLocaleDateString()}. Each one is a date, a name if you typed one, the stroke and the scores.` : 'Nothing stored yet.';
+  const s = store.sessions(), sw = store.swimmers();
+  $('dataSummary').textContent = s.length || sw.length ? `${sw.length} ${sw.length === 1 ? 'swimmer' : 'swimmers'}, ${s.length} scored ${s.length === 1 ? 'lap' : 'laps'} stored on this device${s.length ? ', the first on ' + new Date(s[0].date).toLocaleDateString() : ''}. Each lap is a date, the swimmer, the stroke, the scores and the body-angle line.` : 'Nothing stored yet.';
+  $('swimmerManage').innerHTML = sw.map(x => `<div class="hist"><div>${esc(x.name)} <span>${store.sessionsFor(x.id).length} laps · ${skillsDone(store.skillsFor(x.id))} skills</span></div><button class="btn ghost sm" type="button" data-remove="${x.id}">Remove</button></div>`).join('');
+  $('swimmerManage').querySelectorAll('[data-remove]').forEach(b => b.onclick = () => { const x = store.swimmer(b.dataset.remove); if (x && confirm(`Remove ${x.name} and all their laps and skills from this device?`)) { store.removeSwimmer(x.id); renderSettings(); renderSwimmerRows(); toast(`${x.name} removed`); } });
   $('versionTag').textContent = APP_VERSION;
+}
+
+// ---------- install (PWA) ----------
+function setupInstall() {
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) navigator.serviceWorker.register('sw.js').catch(() => {});
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (standalone || store.settings().installDismissed) return;
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('installHint').hidden = false; });
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  if (ios) { $('installText').textContent = 'In Safari: tap Share, then "Add to Home Screen". It then works at the pool with no signal.'; $('btnInstall').hidden = true; $('installHint').hidden = false; }
+  $('btnInstall').onclick = async () => { if (!deferredInstall) return; deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; $('installHint').hidden = true; };
+  $('btnInstallNo').onclick = () => { store.setSetting('installDismissed', true); $('installHint').hidden = true; };
 }
 
 // ---------- wiring ----------
 window.addEventListener('DOMContentLoaded', () => {
-  refreshHome();
-  // consent sheet on first run
+  setupLive(); setupInstall();
+  renderSwimmerRows(); refreshHome();
+  // consent sheet on first run: a real modal, the rest of the page is inert until Continue
   const setModal = on => { $('app').inert = on; document.querySelector('.tabs').inert = on; document.querySelector('.top').inert = on; };
-  if (!getItem(CONSENT_KEY)) { $('consentSheet').hidden = false; setModal(true); $('consentTitle').focus({ preventScroll: true }); }
+  if (!store.consented()) { $('consentSheet').hidden = false; setModal(true); $('consentTitle').focus({ preventScroll: true }); }
   $('consentCheck').onchange = e => { $('btnConsent').disabled = !e.target.checked; };
-  $('btnConsent').onclick = () => { setItem(CONSENT_KEY, new Date().toISOString()); $('consentSheet').hidden = true; setModal(false); $('btnPick').focus(); };
+  $('btnConsent').onclick = () => { store.setConsented(); $('consentSheet').hidden = true; setModal(false); $('btnPick').focus(); };
 
+  // swimmers
+  document.body.addEventListener('click', e => { if (e.target.closest('[data-add-swimmer]')) openAddSwimmer(); });
+  $('addSwimmerForm').onsubmit = e => { e.preventDefault(); const s = store.addSwimmer($('addSwimmerName').value); if (!s) { $('addSwimmerName').setAttribute('aria-invalid', 'true'); return; } $('addSwimmerName').removeAttribute('aria-invalid'); store.setCurrentSwimmer(s.id); $('addSwimmerForm').hidden = true; refreshAll(); toast(`${s.name} added`); };
+  $('btnAddCancel').onclick = () => { $('addSwimmerForm').hidden = true; };
+
+  // score a lap
   $('btnPick').onclick = () => $('fileInput').click();
   $('fileInput').onchange = async e => {
     const f = e.target.files[0]; if (!f) return;
     $('homeError').hidden = true;
-    const name = $('swimmerName').value.trim(); setItem(NAME_KEY, name);
-    try { await analyze(URL.createObjectURL(f), $('strokeSelect').value, name); }
+    try { await analyze(URL.createObjectURL(f), $('strokeSelect').value, activeSwimmer(), 'lap'); }
     catch (err) { console.error('SafeDive', err); showError(err.message); }
     e.target.value = '';
   };
-  $('btnExamples').onclick = () => show('examples');
+  $('floatFile').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { await analyze(URL.createObjectURL(f), 'float', activeSwimmer(), 'float'); }
+    catch (err) { console.error('SafeDive', err); showError(err.message); }
+    e.target.value = '';
+  };
+  $('btnLive').onclick = () => show('live');
   $('btnCancel').onclick = () => { cancelFlag = true; show('home'); };
-  $('btnAgain').onclick = () => show('home');
+  $('btnAgain').onclick = () => { if (lastRun && lastRun.shared) history.replaceState(null, '', location.pathname); show('home'); };
   $('btnDrillBack').onclick = () => show('results');
+  $('btnDrillDone').onclick = () => { if (!lastRun || !lastRun.sessionId) { toast('Noted. Score a lap to keep track of drills.'); return; } withBadges(lastRun.swimmerId, () => store.updateSession(lastRun.sessionId, { drillDone: true })); $('btnDrillDone').textContent = 'Practised ✓'; $('btnDrillDone').disabled = true; toast('Marked as practised.'); };
+  $('btnDrillPlan').onclick = () => makePlanFrom(currentDrillKey, lastRun ? lastRun.swimmerId : (activeSwimmer() || {}).id);
+  $('btnMakePlan').onclick = () => { const key = lastRun.result.issues.find(k => !NO_DRILL.has(k)) || null; makePlanFrom(key, lastRun.swimmerId !== undefined ? lastRun.swimmerId : (activeSwimmer() || {}).id); };
   $('btnSaveCard').onclick = saveReportCard;
   $('btnCopyJson').onclick = e => copyJson(e.currentTarget);
+  $('btnShareLink').onclick = shareLink;
   $('levelPill').onclick = () => show('progress');
-  $('btnClear').onclick = () => { if (confirm('Delete all scored laps on this device? This cannot be undone.')) { saveSessions([]); progressSelected = -1; renderSettings(); refreshHome(); announce('All scored laps deleted'); } };
+  $('btnClear').onclick = () => { if (confirm('Delete every swimmer, lap, skill and plan on this device? This cannot be undone.')) { store.clearAll(); progressSelected = -1; renderSettings(); renderSwimmerRows(); refreshHome(); toast('Everything deleted'); } };
+
+  // plan card
+  $('btnPlanIcs').onclick = () => { const p = store.plan(); if (!p) return; const sw = p.swimmerId ? store.swimmer(p.swimmerId) : null; downloadText(planToICS(p, sw ? sw.name : ''), 'safedive-plan.ics', 'text/calendar'); toast('Calendar file saved. Open it to add the three days.'); };
+  $('btnPlanClear').onclick = () => { store.savePlan(null); renderPlanCard(); };
+
+  // live
+  $('btnLiveStart').onclick = startLive;
+  $('btnLiveStop').onclick = () => { const r = stopLive(); if (liveTest && r) finishFloat(r, 'camera', activeSwimmer()); };
+  $('voiceToggle').onchange = e => { live.voice = e.target.checked; store.setSetting('voice', e.target.checked); };
+  $('btnFloatAgain').onclick = () => show('live', { test: { seconds: FLOAT.minSeconds } });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && live && live.running) stopLive(); });
+
+  // safety card, compare
+  $('btnSafetyCard').onclick = () => { const sw = activeSwimmer(); shareCanvas(drawSafetyCard(sw, store.skillsFor(sw.id), SKILLS), `safedive-water-safe-${sw.name.replace(/[^a-z0-9]/gi, '').toLowerCase()}.png`, 'Water-safe card'); };
+  $('btnCompare').onclick = () => show('compare');
+  $('cmpA').onchange = renderCompare; $('cmpB').onchange = renderCompare;
+
+  // tabs: click, and arrow keys the way a native tab strip does
   const tabButtons = [...document.querySelectorAll('.tabs button')];
   tabButtons.forEach(b => b.onclick = () => show(b.dataset.tab));
-  // arrow keys move between tabs, the way a native tab strip does
   document.querySelector('.tabs').addEventListener('keydown', e => {
     const i = tabButtons.indexOf(document.activeElement); if (i < 0) return;
     const j = e.key === 'ArrowRight' ? (i + 1) % tabButtons.length : e.key === 'ArrowLeft' ? (i + tabButtons.length - 1) % tabButtons.length : e.key === 'Home' ? 0 : e.key === 'End' ? tabButtons.length - 1 : -1;
@@ -364,18 +595,19 @@ window.addEventListener('DOMContentLoaded', () => {
   // results interactions
   $('scrub').oninput = e => { const i = +e.target.value; drawResultFrame(i); chartHit = drawAngleChart($('angleChart'), lastRun.perFrame, lastRun.times, lastRun.moving, i); };
   $('targetToggle').onchange = () => drawResultFrame(+$('scrub').value);
-  $('angleChart').onclick = e => { if (!chartHit) return; const r = e.currentTarget.getBoundingClientRect(); const i = chartHit(e.clientX - r.left); $('scrub').value = i; $('scrub').oninput({ target: $('scrub') }); };
-  $('historyChart').onclick = e => { if (!historyHit) return; const r = e.currentTarget.getBoundingClientRect(); const i = historyHit(e.clientX - r.left); if (i >= 0) { const all = loadSessions(); const s = progressFilter ? all.filter(x => x.swimmer === progressFilter) : all; progressSelected = s.length - Math.min(12, s.length) + i; renderProgress(); } };
+  $('angleChart').onclick = e => { if (!chartHit || lastRun.shared) return; const r = e.currentTarget.getBoundingClientRect(); const i = chartHit(e.clientX - r.left); $('scrub').value = i; $('scrub').oninput({ target: $('scrub') }); };
+  $('historyChart').onclick = e => { if (!historyHit) return; const r = e.currentTarget.getBoundingClientRect(); const i = historyHit(e.clientX - r.left); if (i >= 0) { const sw = activeSwimmer(); const s = store.sessionsFor(sw ? sw.id : null); progressSelected = s.length - Math.min(12, s.length) + i; renderProgress(); } };
   $('studyChart').onclick = e => { if (!studyHit) return; const r = e.currentTarget.getBoundingClientRect(); const q = studyHit(e.clientX - r.left, e.clientY - r.top); if (q) { studySelected = q; renderEvidence(); } };
-  let resizeTimer; window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { const on = document.querySelector('.screen.active').id.replace('screen-', ''); if (on === 'results' && lastRun) renderResults(); if (on === 'progress') renderProgress(); if (on === 'evidence') renderEvidence(); }, 150); });
+  let resizeTimer; window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { const on = document.querySelector('.screen.active').id.replace('screen-', ''); if (on === 'results' && lastRun) renderResults(); if (on === 'progress') renderProgress(); if (on === 'evidence') renderEvidence(); if (on === 'compare') renderCompare(); if (on === 'live') drawDial($('dial'), null); }, 150); });
 
   // the cover photo gets its skeleton once the browser is idle, so the first paint is instant
   const idle = window.requestIdleCallback || (f => setTimeout(f, 1500));
   idle(() => decorateHero());
 
   const q = new URLSearchParams(location.search);
-  // ?screen=name opens a screen directly (demos, screenshots); ?sample=path runs a clip without the file picker
+  // ?screen=name opens a screen directly (demos, screenshots); ?sample=path runs a clip without the file picker; #lap= is a shared lap
   if (q.get('screen')) show(q.get('screen'), { focus: false });
-  if (q.get('sample')) analyze(q.get('sample'), q.get('stroke') || 'freestyle', q.get('name') || '').catch(err => { console.error('SafeDive', err); showError(err.message); });
-  window.SafeDive = { analyze, show, lastRun: () => lastRun, loadSessions, saveSessions };
+  if (q.get('sample')) analyze(q.get('sample'), q.get('stroke') || 'freestyle', activeSwimmer(), q.get('mode') || 'lap').catch(err => { console.error('SafeDive', err); showError(err.message); });
+  if (location.hash.startsWith('#lap=')) { try { lastRun = unpackLap(location.hash.slice(5)); show('results', { focus: false }); renderResults(); } catch (e) { showError('That shared link could not be read.'); } }
+  window.SafeDive = { analyze, show, store, lastRun: () => lastRun, toast };
 });
