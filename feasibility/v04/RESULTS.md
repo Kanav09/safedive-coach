@@ -88,3 +88,34 @@ fraction, scored fraction, median body angle, frame-to-frame angle jitter, the g
 | web13 | adult in a small pool, far away | 3% | refused: not readable | honest |
 
 Four scored with verdicts a coach would accept, seven refused for the right reasons, zero wrong scores. The two viewpoint refusals led to a wording change: the refusal now says a flat swimmer filmed from the end of the pool or from above looks vertical, film from the side.
+
+## Parity: the shipped JavaScript versus the Python study (`app/test/run_clips_yolo.js`, six sample clips, 10 fps)
+
+The Node harness used to shrink frames with nearest-neighbour sampling; the browser uses bilinear `drawImage`. Nearest-neighbour
+aliased fine detail and under-read both models (the careful model badly: IMG_0389 29% readable instead of 40%). The harness now
+interpolates like the browser. With that fixed, the harness, Python and Chrome agree:
+
+| Clip | fast model readable | careful model readable | verdict (fast / careful) |
+|---|---|---|---|
+| backstroke lap IMG_0389 | 33% | 40% | **90** / **85** (body 14° / 18°, inside the ±5° bar) |
+| back float IMG_0384 | 30% | 23% | refused (readability) / refused |
+| back float IMG_0388 | 16% | 18% | refused / refused |
+| freestyle from deck IMG_0380 | 30% | 36% | refused (readability) / refused (upright: standing most of the time) |
+| treading IMG_0392 | 99% | 100% | refused (upright, not a lap) / same |
+| acted distress IMG_0377 | 74% | 79% | refused (upright) / same |
+
+Speed in Node, single wasm thread: fast 0.36 s a frame, careful 1.0 to 1.4 s. In Chrome with four threads both are roughly three
+times faster. No wrong score from either model on these six.
+
+## Clips fetched from Wikimedia Commons (`feasibility/v04/commons/SOURCES.md`)
+
+Five of the six British Swimming files are poolside interviews with the winners, not races (the titles do not say so).
+One was kept as a negative test: a person out of water must never be scored as a lap. The sixth, "Mary's Swim Boot Camp:
+Kari freestyle" (adult, 1080p, 14 s), is filmed from the end of the lane with the swimmer coming toward the camera.
+Frame by frame with the fast model: while she swims away (5.5 to 8.5 s) no person is detected at all; as she approaches
+(11.5 to 14 s) the near shoulder reads at 0.7 to 0.8 but the far shoulder and both hips sit at 0.02 to 0.3, under the
+0.4 gate, so those frames are unreadable; the only readable frames are a person standing on the deck (0.5 to 5 s,
+hips at 0.9+, angle 75 to 90°). Result: refused, "the body read as upright … or filmed from the end of the pool", which
+is the right verdict and the wording added for exactly this case. Lesson confirmed: a head-on view gives the model no
+hips to read, and the swimmer-following falls back to whoever is visible, so the upright rule is what saves the parent
+from a wrong score.

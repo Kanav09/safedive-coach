@@ -10,13 +10,22 @@ const { TRACK, pickSwimmer, smoothKeypoints } = require('../js/track.js');
 const FOLLOW = process.env.FOLLOW !== '0', SMOOTH = process.env.SMOOTH ? Number(process.env.SMOOTH) : TRACK.smoothWin;
 ort.env.wasm.numThreads = 1;
 
-// Node has no canvas: nearest-neighbour resize of an RGB frame into RGBA, same contract as the browser getPixels.
+// Node has no canvas: bilinear resize of an RGB frame into RGBA, the same contract (and close to the same pixels) as the
+// browser's canvas drawImage. Nearest-neighbour sampling was used before and under-read the careful model by aliasing
+// fine detail (feasibility/v04/RESULTS.md), so the harness now interpolates like the browser does.
 function makeGetPixels(rgb, w, h) {
   return (nw, nh) => {
     const out = new Uint8ClampedArray(nw * nh * 4);
-    for (let y = 0; y < nh; y++) { const sy = Math.min(h - 1, Math.floor(y * h / nh));
-      for (let x = 0; x < nw; x++) { const sx = Math.min(w - 1, Math.floor(x * w / nw)); const s = (sy * w + sx) * 3, d = (y * nw + x) * 4;
-        out[d] = rgb[s]; out[d + 1] = rgb[s + 1]; out[d + 2] = rgb[s + 2]; out[d + 3] = 255; } }
+    const sxr = w / nw, syr = h / nh;
+    for (let y = 0; y < nh; y++) {
+      const fy = Math.min(h - 1, (y + 0.5) * syr - 0.5), y0 = Math.max(0, Math.floor(fy)), y1 = Math.min(h - 1, y0 + 1), wy = fy - y0;
+      for (let x = 0; x < nw; x++) {
+        const fx = Math.min(w - 1, (x + 0.5) * sxr - 0.5), x0 = Math.max(0, Math.floor(fx)), x1 = Math.min(w - 1, x0 + 1), wx = fx - x0;
+        const a = (y0 * w + x0) * 3, b = (y0 * w + x1) * 3, c = (y1 * w + x0) * 3, e = (y1 * w + x1) * 3, d = (y * nw + x) * 4;
+        for (let k = 0; k < 3; k++) out[d + k] = (rgb[a + k] * (1 - wx) + rgb[b + k] * wx) * (1 - wy) + (rgb[c + k] * (1 - wx) + rgb[e + k] * wx) * wy;
+        out[d + 3] = 255;
+      }
+    }
     return out;
   };
 }
