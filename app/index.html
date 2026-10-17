@@ -38,7 +38,7 @@
 
     <div id="lastLap" class="lastlap" hidden><span id="lastLapText"></span><div class="meter" aria-hidden="true"><i id="lastLapFill" style="--w:0%"></i></div></div>
 
-    <div id="homeError" class="notice warn" hidden></div>
+    <div id="homeError" class="notice warn" role="alert" hidden></div>
 
     <div class="form">
       <label class="field"><span>Swimmer's name</span><input id="swimmerName" type="text" placeholder="e.g. Maya" autocomplete="off" maxlength="24"></label>
@@ -99,14 +99,14 @@
   <section id="screen-analyze" class="screen">
     <h2 id="analyzeTitle">Reading the swimmer</h2>
     <div class="stage"><video id="video" playsinline muted preload="auto"></video><canvas id="overlay"></canvas></div>
-    <canvas id="strip" class="strip" aria-label="Which frames the app could read"></canvas>
+    <canvas id="strip" class="strip" role="img" aria-label="Which frames the app could read"></canvas>
     <div class="readouts">
       <div><b id="readNow">–</b><span>body now</span></div>
       <div><b id="readFrac">0%</b><span>readable so far</span></div>
       <div><b id="readEta">…</b><span>time left</span></div>
     </div>
-    <div class="progress"><div id="bar"></div></div>
-    <p id="analyzeNote" class="fine">Loading the pose model…</p>
+    <div id="progressBar" class="progress" role="progressbar" aria-label="Frames read" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar"></div></div>
+    <p id="analyzeNote" class="fine" role="status" aria-live="polite">Loading the pose model…</p>
     <button id="btnCancel" class="btn ghost" type="button">Cancel</button>
   </section>
 
@@ -114,7 +114,7 @@
   <section id="screen-results" class="screen">
     <div id="resHeader" class="meta"></div>
     <div id="resScore" class="scoreblock"></div>
-    <div id="resRefuse" class="notice warn" hidden></div>
+    <div id="resRefuse" class="notice warn" role="status" aria-live="polite" hidden></div>
     <div id="resParts" class="parts"></div>
 
     <h3>Step through the lap</h3>
@@ -124,7 +124,7 @@
       <label class="toggle"><input id="targetToggle" type="checkbox"><span>Show target line</span></label>
     </div>
     <div id="scrubReadout" class="fine mono"></div>
-    <canvas id="angleChart" class="chart" aria-label="Body angle over the clip"></canvas>
+    <canvas id="angleChart" class="chart" role="img" aria-label="Body angle over the clip"></canvas>
     <p class="fine">Orange line: body angle while travelling (0° is flat). Aqua band: the target; where the line runs through it the ink prints green. Short marks: readable but not moving, so not scored. Tap the chart to jump.</p>
 
     <h3>What to fix</h3>
@@ -151,10 +151,10 @@
     <h2>Progress</h2>
     <div class="levelcard">
       <b id="levelName">Tadpole</b><p id="levelNext" class="fine"></p>
-      <div class="meter" aria-hidden="true"><i id="levelFill" style="--w:0%"></i></div>
+      <div id="levelMeter" class="meter" role="progressbar" aria-label="Progress to the next level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="levelFill" style="--w:0%"></i></div>
     </div>
     <div id="chipRow" class="chips"></div>
-    <canvas id="historyChart" class="chart" aria-label="Scores over time"></canvas>
+    <canvas id="historyChart" class="chart" role="img" aria-label="Scores over time"></canvas>
     <div id="sessionDetail" class="notice" hidden></div>
     <div id="historyList" class="list"></div>
     <p class="fine">Levels: Tadpole, Minnow at 3 laps, Otter at 8, Dolphin at 15, Shark at 25. A week counts toward the streak when at least one lap is scored.</p>
@@ -164,7 +164,7 @@
   <section id="screen-evidence" class="screen">
     <h2>Why trust the number</h2>
     <p class="lead">Before writing any screens we ran a pose model over 31 clips we filmed ourselves (16 swimming, 5 treading, 10 acted struggling) and asked one question: does the body angle actually separate flat swimming from a dropped body?</p>
-    <canvas id="studyChart" class="chart" aria-label="Median body angle per clip, by type"></canvas>
+    <canvas id="studyChart" class="chart" role="img" aria-label="Median body angle per clip, by type"></canvas>
     <div id="studyDetail" class="notice">Tap a dot. Each one is a clip: height is the median body angle, darker means the model could read more of its frames.</div>
     <p class="lead">It does. When the swimmer is actually swimming, the body reads between 10° and 43°; a vertical body reads 60° to 88°. The swimming dots up near 80° are clips where the kid spent most of the time standing at the wall, which is why the app throws away frames where the shoulders are not travelling. What the model struggles with is <em>seeing</em> the torso at all when the swimmer is face down in splash, so the app refuses to score instead of guessing.</p>
     <h3>The app's own pipeline on real clips</h3>
@@ -206,17 +206,17 @@
 
 </main>
 
-<nav class="tabs" aria-label="Main">
-  <button type="button" data-tab="home" class="on"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Score</button>
-  <button type="button" data-tab="guide"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Learn</button>
-  <button type="button" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6 16v-5M11 16V8M16 16v-3M21 16V5" /></svg>Progress</button>
-  <button type="button" data-tab="evidence"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>About</button>
+<nav class="tabs" aria-label="Main" role="tablist">
+  <button type="button" role="tab" aria-selected="true" data-tab="home" class="on"><svg viewBox="0 0 24 24"><path d="M4 7h3l2-2h6l2 2h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Score</button>
+  <button type="button" role="tab" aria-selected="false" tabindex="-1" data-tab="guide"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Learn</button>
+  <button type="button" role="tab" aria-selected="false" tabindex="-1" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M6 16v-5M11 16V8M16 16v-3M21 16V5" /></svg>Progress</button>
+  <button type="button" role="tab" aria-selected="false" tabindex="-1" data-tab="evidence"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>About</button>
 </nav>
 
 <!-- first-run consent sheet -->
-<div id="consentSheet" class="sheet" hidden>
+<div id="consentSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="consentTitle" hidden>
   <div class="sheet-card">
-    <h2>Two things to know</h2>
+    <h2 id="consentTitle" tabindex="-1">Two things to know</h2>
     <p><b>Video never leaves this device.</b> The app reads the swimmer's body position right here and keeps only the scores.</p>
     <p><b>Film your own swimmer.</b> For a child, that means you are the parent or guardian, or have their say-so.</p>
     <p class="fine">SafeDive Coach is a swim-form helper. It is not a safety device and does not watch for drowning. An adult must always be watching the water.</p>
@@ -224,6 +224,8 @@
     <button id="btnConsent" class="btn primary" type="button" disabled>Continue</button>
   </div>
 </div>
+
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
 
 <script src="vendor/ort/ort.min.js"></script>
 <script src="js/pose_yolo.js"></script>

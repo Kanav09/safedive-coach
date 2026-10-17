@@ -21,10 +21,12 @@ function setItem(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
 // ---------- screens and tabs ----------
 const TAB_OF = { home: 'home', examples: 'guide', guide: 'guide', analyze: 'home', results: 'home', drill: 'home', progress: 'progress', evidence: 'evidence', settings: 'evidence' };
-function show(name) {
+function show(name, opts = {}) {
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === 'screen-' + name));
-  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === TAB_OF[name]));
+  document.querySelectorAll('.tabs button').forEach(b => { const on = b.dataset.tab === TAB_OF[name]; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; });
   window.scrollTo(0, 0);
+  // keyboard and screen-reader users land on the new screen's heading instead of staying on a button that just vanished
+  if (opts.focus !== false) { const scr = $('screen-' + name), h = scr.querySelector('h1, h2') || scr; h.tabIndex = -1; h.focus({ preventScroll: true }); }
   if (name === 'home') refreshHome();
   if (name === 'progress') renderProgress();
   if (name === 'evidence') renderEvidence();
@@ -49,6 +51,8 @@ function refreshHome() {
   } else lap.hidden = true;
 }
 function showError(msg) { show('home'); const box = $('homeError'); box.textContent = msg; box.hidden = false; }
+// Say something to screen readers without showing anything (the live region is visually hidden). Cleared first so a repeat is re-read.
+function announce(msg) { const el = $('live'); el.textContent = ''; requestAnimationFrame(() => { el.textContent = msg; }); }
 
 // ---------- pose model ----------
 async function getDetector(note = () => {}) {
@@ -184,7 +188,8 @@ async function analyze(src, stroke, swimmer) {
     $('readNow').textContent = m ? `${m.torsoAngle.toFixed(0)}°` : (kps ? 'hidden' : 'none');
     $('readFrac').textContent = `${Math.round(100 * perFrame.filter(Boolean).length / perFrame.length)}%`;
     $('readEta').textContent = fmtEta((total - i - 1) * (spent / (i + 1)) / 1000);
-    $('bar').style.width = `${Math.round(100 * (i + 1) / total)}%`;
+    const pct = Math.round(100 * (i + 1) / total);
+    $('bar').style.width = `${pct}%`; $('progressBar').setAttribute('aria-valuenow', pct);
     drawReadabilityStrip($('strip'), perFrame, null, total);
   }
   const summary = clipSummary(perFrame, fps);
@@ -198,6 +203,7 @@ async function analyze(src, stroke, swimmer) {
   }
   show('results');                 // charts need their real width, so the screen is shown before drawing
   renderResults();
+  announce(result.ok ? `Lap scored ${result.score}. ${scoreWord(result.score)}.` : `Not scored. ${result.reason}`);
   return lastRun;
 }
 
@@ -242,6 +248,7 @@ async function drawResultFrame(i) {
   const state = !kps ? 'no swimmer found' : !m ? 'torso not readable' : moving[i] ? `body ${m.torsoAngle.toFixed(0)}° · travelling, scored` : `body ${m.torsoAngle.toFixed(0)}° · still, not scored`;
   drawLabel(ctx, `${times[i].toFixed(1)} s · ${state}`);
   $('scrubReadout').textContent = `Frame ${i + 1} of ${times.length} · ${state}`;
+  $('scrub').setAttribute('aria-valuetext', `Frame ${i + 1} of ${times.length}, ${state}`);
   if (!drewVideo && !best) { ctx.fillStyle = '#0a1a26'; ctx.fillRect(0, 0, cv.width, cv.height); drawLabel(ctx, 'No readable frame to show'); }
 }
 
@@ -257,13 +264,15 @@ async function saveReportCard() {
   const name = `safedive-${(lastRun.swimmer || 'lap').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'lap'}-${lastRun.date.slice(0, 10)}.png`;
   const blob = await new Promise(r => card.toBlob(r, 'image/png'));
   const file = new File([blob], name, { type: 'image/png' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'SafeDive Coach report card' }); return; } catch (e) { /* user closed the sheet: fall through to download */ } }
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: 'SafeDive Coach report card' }); announce('Report card shared'); return; } catch (e) { /* user closed the sheet: fall through to download */ } }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  announce('Report card saved as ' + name);
 }
 async function copyJson(btn) {
   const text = JSON.stringify(resultToJSON(lastRun, lastRun.fps), null, 2);
   try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; }
   catch (e) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); btn.textContent = 'Copied'; }
+  announce('Copied the result as JSON');
   setTimeout(() => { btn.textContent = 'Copy as JSON'; }, 1800);
 }
 
@@ -274,7 +283,7 @@ function renderProgress() {
   const names = [...new Set(all.map(s => s.swimmer).filter(Boolean))];
   const chips = $('chipRow'); chips.innerHTML = '';
   if (names.length > 1) {
-    for (const n of [null, ...names]) { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (progressFilter === n ? ' on' : ''); b.textContent = n || 'Everyone'; b.onclick = () => { progressFilter = n; progressSelected = -1; renderProgress(); }; chips.appendChild(b); }
+    for (const n of [null, ...names]) { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip' + (progressFilter === n ? ' on' : ''); b.setAttribute('aria-pressed', progressFilter === n); b.textContent = n || 'Everyone'; b.onclick = () => { progressFilter = n; progressSelected = -1; renderProgress(); }; chips.appendChild(b); }
   } else progressFilter = null;
   const s = progressFilter ? all.filter(x => x.swimmer === progressFilter) : all;
   const lvl = levelFor(all.length), needs = [0, 3, 8, 15, 25];
@@ -282,7 +291,8 @@ function renderProgress() {
   $('levelNext').textContent = lvl.toNext === null ? 'Top level. Keep the streak going.' : `${lvl.toNext} more scored ${lvl.toNext === 1 ? 'lap' : 'laps'} to ${['Minnow', 'Otter', 'Dolphin', 'Shark'][lvl.index]}. Week streak: ${weekStreak(all)}.`;
   const span = lvl.toNext === null ? 1 : (needs[lvl.index + 1] - needs[lvl.index]);
   const frac = lvl.toNext === null ? 1 : (all.length - needs[lvl.index]) / span;
-  $('levelFill').style.setProperty('--w', `${Math.round(100 * Math.max(0, Math.min(1, frac)))}%`);
+  const levelPct = Math.round(100 * Math.max(0, Math.min(1, frac)));
+  $('levelFill').style.setProperty('--w', `${levelPct}%`); $('levelMeter').setAttribute('aria-valuenow', levelPct);
   const last = s.slice(-12);
   historyHit = drawHistoryChart($('historyChart'), last, progressSelected >= 0 ? progressSelected - (s.length - last.length) : -1);
   const detail = $('sessionDetail');
@@ -292,7 +302,8 @@ function renderProgress() {
     detail.innerHTML = `<b>${new Date(x.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</b> · ${x.swimmer || 'no name'} · ${STROKES[x.stroke] || x.stroke}<br>Score ${x.score} (${scoreWord(x.score)}). Body line ${x.torsoAngle === null || x.torsoAngle === undefined ? '–' : x.torsoAngle.toFixed(0) + '°'} from flat, readable in ${Math.round((x.readable || 0) * 100)}% of frames.${x.issues ? '<br><span class="fine">Worked on: ' + x.issues.filter(k => !NO_DRILL.has(k)).map(k => DRILLS[k] ? DRILLS[k].name : k).join(', ') + '</span>' : ''}`;
     if (x.issues) { const drill = x.issues.find(k => !NO_DRILL.has(k)); if (drill) detail.innerHTML += ` <a href="#" data-drill="${drill}">Open the drill</a>`; detail.querySelectorAll('[data-drill]').forEach(a => a.onclick = ev => { ev.preventDefault(); openDrill(a.dataset.drill); }); }
   } else detail.hidden = true;
-  $('historyList').innerHTML = s.map((x, i) => `<div class="hist${i === progressSelected ? ' on' : ''}" data-i="${i}"><div>${new Date(x.date).toLocaleDateString()} · ${x.swimmer || ''} <span>${STROKES[x.stroke] || x.stroke}</span></div><b>${x.score}</b></div>`).reverse().join('') || '<p class="fine">No laps scored yet. Score one from the first tab.</p>';
+  $('historyList').innerHTML = s.map((x, i) => `<button type="button" class="hist${i === progressSelected ? ' on' : ''}" data-i="${i}" aria-pressed="${i === progressSelected}"><div>${new Date(x.date).toLocaleDateString()} · ${x.swimmer || ''} <span>${STROKES[x.stroke] || x.stroke}</span></div><b>${x.score}</b></button>`).reverse().join('')
+    || '<div class="empty"><b>No laps scored yet</b><p>Film one lap from the side of the pool and the score shows up here.</p><button class="btn secondary" type="button" data-go="home">Score a lap</button></div>';
   $('historyList').querySelectorAll('.hist').forEach(el => el.onclick = () => { progressSelected = +el.dataset.i; renderProgress(); });
 }
 
@@ -318,9 +329,10 @@ function renderSettings() {
 window.addEventListener('DOMContentLoaded', () => {
   refreshHome();
   // consent sheet on first run
-  if (!getItem(CONSENT_KEY)) { $('consentSheet').hidden = false; }
+  const setModal = on => { $('app').inert = on; document.querySelector('.tabs').inert = on; document.querySelector('.top').inert = on; };
+  if (!getItem(CONSENT_KEY)) { $('consentSheet').hidden = false; setModal(true); $('consentTitle').focus({ preventScroll: true }); }
   $('consentCheck').onchange = e => { $('btnConsent').disabled = !e.target.checked; };
-  $('btnConsent').onclick = () => { setItem(CONSENT_KEY, new Date().toISOString()); $('consentSheet').hidden = true; };
+  $('btnConsent').onclick = () => { setItem(CONSENT_KEY, new Date().toISOString()); $('consentSheet').hidden = true; setModal(false); $('btnPick').focus(); };
 
   $('btnPick').onclick = () => $('fileInput').click();
   $('fileInput').onchange = async e => {
@@ -338,8 +350,15 @@ window.addEventListener('DOMContentLoaded', () => {
   $('btnSaveCard').onclick = saveReportCard;
   $('btnCopyJson').onclick = e => copyJson(e.currentTarget);
   $('levelPill').onclick = () => show('progress');
-  $('btnClear').onclick = () => { if (confirm('Delete all scored laps on this device? This cannot be undone.')) { saveSessions([]); progressSelected = -1; renderSettings(); refreshHome(); } };
-  document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => show(b.dataset.tab));
+  $('btnClear').onclick = () => { if (confirm('Delete all scored laps on this device? This cannot be undone.')) { saveSessions([]); progressSelected = -1; renderSettings(); refreshHome(); announce('All scored laps deleted'); } };
+  const tabButtons = [...document.querySelectorAll('.tabs button')];
+  tabButtons.forEach(b => b.onclick = () => show(b.dataset.tab));
+  // arrow keys move between tabs, the way a native tab strip does
+  document.querySelector('.tabs').addEventListener('keydown', e => {
+    const i = tabButtons.indexOf(document.activeElement); if (i < 0) return;
+    const j = e.key === 'ArrowRight' ? (i + 1) % tabButtons.length : e.key === 'ArrowLeft' ? (i + tabButtons.length - 1) % tabButtons.length : e.key === 'Home' ? 0 : e.key === 'End' ? tabButtons.length - 1 : -1;
+    if (j < 0) return; e.preventDefault(); show(tabButtons[j].dataset.tab, { focus: false }); tabButtons[j].focus();
+  });
   document.body.addEventListener('click', e => { const go = e.target.closest('[data-go]'); if (go) { e.preventDefault(); show(go.dataset.go); } });
 
   // results interactions
@@ -356,7 +375,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const q = new URLSearchParams(location.search);
   // ?screen=name opens a screen directly (demos, screenshots); ?sample=path runs a clip without the file picker
-  if (q.get('screen')) show(q.get('screen'));
+  if (q.get('screen')) show(q.get('screen'), { focus: false });
   if (q.get('sample')) analyze(q.get('sample'), q.get('stroke') || 'freestyle', q.get('name') || '').catch(err => { console.error('SafeDive', err); showError(err.message); });
   window.SafeDive = { analyze, show, lastRun: () => lastRun, loadSessions, saveSessions };
 });
