@@ -97,11 +97,11 @@ function buildExamples() {
   for (const ex of EXAMPLES) {
     const card = document.createElement('article'); card.className = 'example';
     card.innerHTML = `<div class="pic"><img src="${ex.src}" alt="${ex.title}"><canvas style="opacity:0;transition:opacity .5s"></canvas></div>
-      <div class="body"><h3>${ex.title}</h3><p>${ex.caption}</p><button class="btn secondary" type="button">Run the model on this frame</button><div class="result"></div></div>`;
+      <div class="body"><h3>${ex.title}</h3><p>${ex.caption}</p><button class="btn secondary sm" type="button">Run the model on this frame</button><div class="result"></div></div>`;
     const img = card.querySelector('img'), cv = card.querySelector('canvas'), btn = card.querySelector('button'), out = card.querySelector('.result');
     img.addEventListener('load', () => { if (img.naturalHeight > img.naturalWidth) card.querySelector('.pic').classList.add('portrait'); });
     btn.onclick = async () => {
-      btn.disabled = true; btn.textContent = detector ? 'Reading…' : 'Loading the model (12 MB, once)…';
+      btn.setAttribute('aria-busy', 'true'); btn.textContent = detector ? 'Reading…' : 'Loading the model (12 MB, once)…';
       try {
         if (!img.complete) await new Promise(r => { img.onload = r; });
         cv.width = img.naturalWidth; cv.height = img.naturalHeight;
@@ -119,7 +119,7 @@ function buildExamples() {
         out.innerHTML = `${line}<br><span class="fine">What we expect here: ${ex.expect}</span>`; out.classList.add('show');
         btn.textContent = 'Run again';
       } catch (e) { out.textContent = 'Could not run the model: ' + e.message; out.classList.add('show'); btn.textContent = 'Try again'; }
-      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
     };
     host.appendChild(card);
   }
@@ -227,7 +227,7 @@ function renderResults() {
     // one tip, one drill: the first tip that has a drill leads, full size; the rest follow smaller
     let lead = false;
     tips.innerHTML = result.tips.map((t, i) => { const d = drillFor(result.issues[i]); const cls = d ? (lead ? 'fix' : 'fix lead') : 'ok'; if (d) lead = true;
-      return `<li class="${cls}"><span>${t}</span>${d ? `<button class="btn secondary" type="button" data-drill="${result.issues[i]}">Drill: ${d.name}</button>` : ''}</li>`; }).join('');
+      return `<li class="${cls}"><span>${t}</span>${d ? `<button class="btn secondary sm" type="button" data-drill="${result.issues[i]}">Drill: ${d.name}</button>` : ''}</li>`; }).join('');
     tips.querySelectorAll('[data-drill]').forEach(b => b.onclick = () => openDrill(b.dataset.drill));
   }
   // frame stepper
