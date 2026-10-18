@@ -145,10 +145,11 @@
     <p class="lead">The pose model only scores frames where it can see both shoulders and both hips. These five habits came straight out of our test footage.</p>
     <ol class="rules">
       <li><b>Stand on the side, not the end.</b> The app measures the angle between shoulders and hips, so it needs a side view.</li>
-      <li><b>Get low.</b> Crouch or sit on the deck so the phone is near water level. From standing height the hips vanish under the surface.</li>
+      <li><b>Crouch on the deck, a little above the water.</b> Not standing height, which tilts the body in the picture, and not right at the surface, which hides the hips: in our study freestyle filmed from the surface read in 12 to 26% of frames, the same stroke filmed close and slightly above the water read in 90%.</li>
       <li><b>3 to 5 metres away, landscape.</b> Close enough that the swimmer is a decent size in the frame, far enough to fit a few strokes.</li>
       <li><b>Start after the push-off, stop before the wall.</b> Standing frames are ignored anyway, but the clip stays short and quick to score.</li>
       <li><b>One swimmer in the shot.</b> The app follows the most confident person it finds. A crowded lane confuses it.</li>
+      <li><b>Film from the same spot each time.</b> The body-line number depends on where the phone was. Backstroke and back float read best; for freestyle, compare laps filmed the same way and watch the trend rather than one number.</li>
     </ol>
     <div class="compare">
       <figure><img src="assets/examples/flat_float.jpg" alt="Swimmer floating flat on the back, filmed from the side near water level"><figcaption><b>Reads well.</b> Side-on, low, back float. The model read 98% of frames in this clip.</figcaption></figure>
@@ -285,7 +286,7 @@
     <p>Swimmers' trunks sit 10° to 15° from flat at everyday speeds, and front crawl and backstroke are the same within a degree or two (Zamparo and colleagues 2009; Gonjo and colleagues 2023). Novice 8 to 13-year-olds measured 2° to 14°, and the angle fell as they improved (Jerszyński and colleagues 2013). A phone held on the deck looks down at the water, which adds to the angle in the picture: our own clearly flat laps read 11° to 32°. So the app's bands are set about 10° above the papers, and every reading is quoted to ±5°, the error found when 2D pose keypoints are checked against lab motion capture on land. Children stroke faster than adults, about 35 cycles a minute at an easy pace (Kjendlie and colleagues 2004), which is why the rhythm band reaches 1.5 strokes a second per arm. The full list of sources is in the repository, feasibility/v04/LITERATURE.md.</p>
     <h3>Honest limits</h3>
     <ul class="plain">
-      <li>The body-line bands lean on published adult and novice studies, shifted for a deck-height phone; the head-position and rhythm bands are our own and are not validated.</li>
+      <li>The body-line bands lean on published adult and novice studies, shifted for a deck-height phone; the head-position and rhythm bands are our own and are not validated. The absolute number moves with camera height, so compare laps filmed from the same spot; a strong freestyler filmed from slightly above can read 30° and be told the hips look low.</li>
       <li>Frames where the body is steeper than 60° (standing, treading, at the wall) are counted but never scored. If that is most of what the app saw, it says so instead of scoring. A lap that reads steeper than 45° the whole way is refused too: that is a phone held high, at the end of the lane or behind the swimmer, not sinking hips. Film from the side, near the water.</li>
       <li>Freestyle filmed from standing height is mostly unreadable with the phone model.</li>
       <li>The app follows one person. It is not a lifeguard and never will be. The live coach and the float test are the same model, so they share the same limits.</li>

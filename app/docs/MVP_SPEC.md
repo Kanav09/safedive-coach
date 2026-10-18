@@ -54,7 +54,7 @@
 
 **What we deliberately do not claim.** Stroke type (asked, not detected), roll symmetry (needs a head-on or underwater view), kick rate (feet rarely visible), breathing pattern (needs a face-tracking model). The template's "overall skill score 0 to 100 with beginner/intermediate/advanced category" is replaced by a lap score with a word (Strong lap / Getting there / Work on this), because the data supports judging a lap, not a swimmer.
 
-**Input requirements.** Side-on, phone near water level, 3 to 5 m, landscape, one swimmer, 1080p or 720p at 30 fps. The app samples 8 frames a second (4 on slow devices), up to 30 s.
+**Input requirements.** Side-on, phone a little above the water (crouching on the deck, not standing, not at the surface), 3 to 5 m, landscape, one swimmer, 1080p or 720p at 30 fps. The app samples 8 frames a second (4 on slow devices), up to 30 s. Evidence for the camera height: feasibility/v04/RESULTS.md, third batch.
 
 **Labelled data.** 87 clips with a class label only (46 swimming, 14 treading, 14 acted struggling, 13 of them from the web), no keypoint labels, plus 31 full-resolution originals. Used to pick the model, set the readability gate, find the upright-frame rule and choose the smoothing. See `feasibility/RESULTS.md` (31-clip study), `feasibility/v04/RESULTS.md` (87-clip study), `feasibility/v04/LITERATURE.md` (published thresholds) and the About screen.
 

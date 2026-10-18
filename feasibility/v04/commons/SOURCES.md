@@ -22,3 +22,27 @@ Used only as test input for the pose pipeline; the files are not redistributed w
 | pexels8050294_kickboard.mp4 | "Man Using Swimming Board in the Pool" (pexels.com/video/8050294) | SHVETS production | Pexels licence |
 | pexels8686014_butterfly_outdoor.mp4 | "Swimmer in the Pool" (pexels.com/video/8686014) | Kindel Media | Pexels licence |
 | pexels8050293_woman_indoor.mp4 | "A Woman Swimming in an Indoor Swimming Pool" (pexels.com/video/8050293) | SHVETS production | Pexels licence |
+
+## Third batch (2026-10-17), prefix b3_
+
+| File | Title | Author | License |
+|---|---|---|---|
+| b3_kid_backyard_6588987.mp4 | Slow motion of a kid swimming (pexels.com/video/6588987) | Marc Espejo | Pexels licence |
+| b3_kids_lesson_instructor_38731893.mp4 | Swimming lesson with kids in indoor pool (pexels.com/video/38731893) | Rony Way | Pexels licence |
+| b3_athlete_laps_indoor_6012510.mp4 | Child swimming / athlete swimming laps (pexels.com/video/6012510) | Tima Miroshnichenko | Pexels licence |
+| b3_man_freestyle_indoor_6012158.mp4 | A man swimming fast in the pool (pexels.com/video/6012158) | Tima Miroshnichenko | Pexels licence |
+| b3_athlete_lane_indoor_6539552.mp4 | A man swimming in an indoor pool (pexels.com/video/6539552) | Kampus Production | Pexels licence |
+| b3_skilled_swimmer_6539542.mp4 | A person swimming in the pool (pexels.com/video/6539542) | Kampus Production | Pexels licence |
+| b3_woman_indoors_6539513.mp4 | A woman swimming in a pool (pexels.com/video/6539513) | Kampus Production | Pexels licence |
+| b3_backstroke_athlete_6539511.mp4 | Man swimming at the pool (pexels.com/video/6539511) | Kampus Production | Pexels licence |
+| b3_woman_swimming_6539692.mp4 | A woman swimming in the pool (pexels.com/video/6539692) | Kampus Production | Pexels licence |
+| b3_swimmer_strokes_6539613.mp4 | A man swimming in the pool (pexels.com/video/6539613) | Kampus Production | Pexels licence |
+| b3_male_laps_6539603.mp4 | A swimmer doing breast strokes (pexels.com/video/6539603) | Kampus Production | Pexels licence |
+| b3_breaststroke_6539521.mp4 | Man doing a breaststroke swimming style (pexels.com/video/6539521) | Kampus Production | Pexels licence |
+| b3_woman_backstroke_8050234.mp4 | Woman doing a backstroke (pexels.com/video/8050234) | SHVETS production | Pexels licence |
+| b3_amputee_swimmer_4115399.mp4 | A man swimming in the pool (pexels.com/video/4115399) | ShotPot | Pexels licence |
+| b3_para_swimmer_4115985.mp4 | A man swimming in the pool (pexels.com/video/4115985) | ShotPot | Pexels licence |
+| b3_outdoor_race_portrait_34394019.mp4 | Outdoor competitive swimming event (pexels.com/video/34394019) | Josué Rodríguez | Pexels licence |
+| b3_olympic_pool_practice_14090821.mp4 | People training at an Olympic swimming pool (pexels.com/video/14090821) | Judas Isariot | Pexels licence |
+| b3_youth_champs_1971_openbeelden.ogv | Europese zwemkampioenschappen voor de jeugd, Weeknummer 71-34 (Wikimedia Commons / Open Beelden) | Nederlands Instituut voor Beeld en Geluid | CC BY-SA 3.0 NL |
+| b3_nationals_1948_polygoon.webm | Nationale zwemkampioenschappen 1948 (Wikimedia Commons) | Polygoon Hollands Nieuws | Public domain |

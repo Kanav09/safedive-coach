@@ -154,3 +154,39 @@ would dispute is the 4×200 relay: elite swimmers told their hips look low. The 
 water, which the app does not claim to support and the tip now says so; a side view at water level is the filming guide's
 first rule for exactly this reason. Everything above is reproducible with `FRAMES=frames_study|frames_commons|frames_commons2
 node test/run_clips_yolo.js` once the frames are dumped (`feasibility/v04/commons/SOURCES.md` lists the inputs).
+
+## Third batch: nineteen more clips (fast model / careful model, shipped JavaScript, `test/frames_b3`)
+
+| Level and view | Clip | Readable | Verdict |
+|---|---|---|---|
+| beginner, backyard, close | kid splashing at the surface (Pexels 6588987) | 28% / 30% | refused / **90** flat 14° |
+| beginner, lesson on floats, elevated side | kids with an instructor (Pexels 38731893) | 98% / 93% | **64** "hips look low" 44° / refused steep 45° |
+| trained, **side-on, close, phone a little above the water** | para swimmer freestyle (Pexels 4115985) | **90% / 93%** | **71** / **66**, body 33° / 32°, "hips look low" |
+| trained, side, slightly elevated, close | woman backstroke (Pexels 8050234) | 87% / 82% | **94** / **96**, body 6° / 15° |
+| trained, side-on **at the water surface** | male laps (6539603), swimmer strokes (6539613), skilled swimmer (6539542), man freestyle far (6012158), breaststroke (6539521) | 12 to 26% | all refused: not readable |
+| trained, far, small in frame | athlete in lane (6539552), athlete laps dark pool (6012510), Olympic pool from the stands (14090821) | 5 to 16% | refused: not readable |
+| trained, head-on | amputee swimmer backstroke toward camera (4115399) | 98% | refused: upright, film from the side |
+| trained, underwater | backstroke athlete (6539511), woman breaststroke (6539513) | 20 to 61% | fast scored the backstroke 76 at 21°; careful refused both (readability / steep) |
+| not a lap | woman at the wall (6539692) | 3% / 0% | refused |
+| competitive, portrait, wide | outdoor race (34394019) | 48% / 63% | **92** / **94**, flat 11°, on the near swimmer |
+| historical newsreels | 1948 nationals, 1971 youth championships | 28 to 45% | refused: upright most of the time (crowd, podium, starts) |
+
+What this batch taught:
+
+1. **Freestyle filmed at the water surface is unreadable, even side-on and close.** Five such clips read 12 to 26%. The hips
+   of a front-crawl swimmer sit at or under the surface, and from water level the model cannot see them. The one freestyle
+   clip that read 90% (the para swimmer) was filmed close and a little above the water, looking slightly down through the
+   surface. The filming guide used to say "get low, near water level"; it now says crouch on the deck, a little above the
+   water, close, side-on. Standing height inflates the angle; the surface hides the hips; in between is the sweet spot.
+2. **Backstroke reads beautifully** from the side at any sensible height (87%, scored 94 and 96, body 6 to 15°). The app's
+   own kid backstroke lap agrees (33%, 90). Backstroke and back float are the app's strongest case and the guide says so.
+3. **The one verdict to question** is the para swimmer: a strong freestyler told "hips look low" at 33°. Both models agree
+   on the angle, so it is not noise; it is the image-plane angle of a rolling freestyle body seen from slightly above. The
+   absolute body-line number depends on where the phone was, so the app now tells parents to compare laps filmed from the
+   same spot and watch the trend, rather than treat one number as a verdict. The bands were not changed on one clip.
+4. **The rules held.** Nothing that was not a lap received a score from the careful model; the fast model gave a 64 to kids
+   hanging on floats at 44°, one degree under the steep line, and a 76 to an underwater backstroke, a view the app does not
+   claim. Head-on, far, and dry-land clips all refused for the stated reasons.
+
+Running totals across every clip the pipeline was never tuned on: 43 clips, 11 scored, 32 refused, two scores a coach would
+argue with (the relay from the stands and the para swimmer, both camera-position effects), none on a person out of the water.
