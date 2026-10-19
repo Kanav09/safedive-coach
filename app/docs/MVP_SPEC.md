@@ -20,6 +20,7 @@
 | v0.4 | Water safety: five Red Cross skills, parent sign-off, camera or clip float test | Built (`js/safety.js`); float test unit tested, camera path needs a pool |
 | v0.4 | Swimmer profiles, badges, weekly plan + calendar, compare two laps | Built (`js/store.js`, `js/badges.js`, `js/plan.js`, `draw.js`) |
 | v0.4 | Installable, works offline (service worker caches the model) | Built (`sw.js`, `manifest.json`, icons) |
+| v0.5 | Sample lap button, last-lap card, "what to try" on refusals, badge glyphs, live framing guide | Built 2026-10-19 (`app.js` `runSample`, `BADGE_ICONS`; the sample lap is never saved) |
 
 ## User stories with acceptance criteria
 

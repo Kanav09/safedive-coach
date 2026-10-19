@@ -144,7 +144,6 @@ select { padding-right: 40px; background-image: url("data:image/svg+xml,%3Csvg x
 .stage.loading::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, var(--paper-bright) 50%, transparent 70%); background-size: 200% 100%; animation: sweep 1.3s linear infinite; }
 @keyframes sweep { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 .stage.off { background: var(--paper-deep); } .stage.off video, .stage.off canvas { opacity: 0; }
-.stage.off::before { content: "Nothing is recorded"; position: absolute; inset: 0; display: grid; place-items: center; font: 800 var(--t2) var(--display); color: var(--ink-2); letter-spacing: -.02em; }
 .stage video, .stage canvas { display: block; width: 100%; height: auto; } .stage canvas { position: absolute; left: 0; top: 0; }
 #screen-results .stage canvas { position: static; }
 .strip { display: block; width: 100%; height: 14px; margin: 12px 0 0; border: 1px solid var(--hair); }
@@ -317,3 +316,28 @@ button.hist.on { border-bottom-color: var(--ink); }
 .screen:focus { outline: none; }   /* a screen gets focus after navigation for screen readers; the ring belongs on controls, not the page */
 h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus { outline: none; }
 .levelcard + h3 { border-top: 0; margin-top: 18px; }   /* the level card already closes with a rule; no double line before Badges */
+
+/* ---- v0.5: paper grain, the sample lap, the last-lap card, badge glyphs, the live framing guide, what to try ---- */
+/* risograph paper has tooth: a faint fixed grain under everything, above the paper colour only (z-index -1 keeps it below all content) */
+body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .14; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .1 0 0 0 0 .1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 240px 240px; }
+.btn.ghost.sm { min-height: 44px; font-size: 15px; margin-top: 10px; }
+/* the last lap is the home screen's own score block: number, verdict, trend, tap for the history */
+.lapcard { display: grid; grid-template-columns: auto 1fr; gap: 0 14px; align-items: center; width: 100%; text-align: left; font-family: inherit; color: inherit; cursor: pointer; padding: 12px 14px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: background-color .15s var(--ease), transform .08s var(--ease); }
+.lapcard .lapnum { font: 800 var(--t4)/.9 var(--display); font-stretch: 90%; letter-spacing: -.04em; min-width: 2ch; text-align: center; }
+.lapcard .lapnum.good { color: var(--over); } .lapcard .lapnum.warn { color: var(--sun-text); } .lapcard .lapnum.bad { color: var(--ink); }
+.lapcard .lapbody { display: grid; gap: 3px; min-width: 0; } .lapcard .lapbody b { font: 800 var(--t1)/1.1 var(--display); } .lapcard .lapbody .fine { display: block; }
+.lapcard .meter { margin-top: 5px; }
+.lapcard:active { transform: translateY(1px); transition-duration: 0s; }
+@media (hover: hover) { .lapcard:hover { background: var(--paper-deep); } }
+/* badge glyphs: faint on blank paper, paper-coloured on the printed seal (the seal's centre is the aqua-over-orange green) */
+.badge .seal { display: grid; place-items: center; color: var(--ink-2); }
+.badge .seal svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; position: relative; z-index: 1; transform: rotate(8deg); opacity: .5; }
+.badge.on .seal { color: var(--paper); } .badge.on .seal svg { opacity: 1; }
+/* live coach before the camera is on: a drawn framing guide instead of an empty box */
+.frameguide { display: none; position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+.stage.off .frameguide { display: block; }
+.frameguide text { font: 800 13px var(--display); letter-spacing: .02em; }
+/* a refusal says what to try, not just why */
+.tries { margin: 12px 0 4px; padding-top: 10px; border-top: 1px solid var(--hair); }
+.tries b { font: 800 var(--t1)/1.1 var(--display); } .tries ul { margin: 6px 0 8px; padding-left: 20px; } .tries li { margin: 4px 0; font-size: 15px; }
+.notice .btn.sm { margin-top: 10px; }

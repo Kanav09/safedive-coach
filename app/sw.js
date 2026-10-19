@@ -1,7 +1,7 @@
 // SafeDive Coach service worker: the whole app, model included, is cached on first visit so it works at the pool with no signal.
 // Cache-first for everything in PRECACHE (all same-origin, all versioned by CACHE); anything else goes to the network.
 // Bump CACHE whenever a file in the list changes; the old cache is deleted on activate.
-const CACHE = 'safedive-v0.4.2';   // the careful model (40 MB) is NOT precached: it is fetched on demand and then kept by the cache-first rule
+const CACHE = 'safedive-v0.5.0';   // the careful model (40 MB) is NOT precached: it is fetched on demand and then kept by the cache-first rule
 const PRECACHE = [
   './', './index.html', './manifest.json', './css/style.css',
   './js/pose_yolo.js', './js/metrics.js', './js/scoring.js', './js/drills.js', './js/examples.js', './js/store.js', './js/badges.js', './js/safety.js', './js/plan.js', './js/share.js', './js/track.js', './js/draw.js', './js/report.js', './js/live.js', './js/app.js',

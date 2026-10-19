@@ -12,6 +12,7 @@ const POSE_MODELS = { fast: { url: 'models/yolo/yolo11n-pose.onnx', label: 'fast
 const POSE_INPUT = 640;
 const MAX_SECONDS = 30;                       // longest stretch of a lap clip we analyse
 const FLOAT_MAX_SECONDS = 95;                 // the float test needs a full minute plus slack
+const SAMPLE = { src: 'samples/normal_swimming_IMG_0389.mp4', stroke: 'backstroke' };   // our own backstroke lap: the one bundled clip the rules score (90), so anyone can see the app work without filming
 const store = makeStore();
 store.migrate();
 
@@ -91,10 +92,15 @@ function refreshHome() {
   $('statStreak').textContent = weekStreak(s);
   $('statBest').textContent = s.length ? Math.max(...s.map(x => x.score)) : '–';
   $('levelPill').textContent = levelFor(s.length).name;
-  const last = s[s.length - 1], lap = $('lastLap');
+  const last = s[s.length - 1], prev = s[s.length - 2], lap = $('lastLap');
   if (last) {
-    const angle = last.torsoAngle === null || last.torsoAngle === undefined ? '' : ` · body line ${last.torsoAngle.toFixed(0)}° from flat`;
-    $('lastLapText').innerHTML = `Last lap <b>${last.score}</b> · ${last.swimmer ? esc(last.swimmer) + ' · ' : ''}${fmtDate(last.date)}${angle}`;
+    const angle = last.torsoAngle === null || last.torsoAngle === undefined ? '' : ` · body ${last.torsoAngle.toFixed(0)}° from flat`;
+    const d = prev ? last.score - prev.score : null;
+    const trend = d === null ? 'first scored lap' : d > 0 ? `up ${d} on the lap before` : d < 0 ? `down ${-d} on the lap before` : 'same as the lap before';
+    $('lastLapNum').textContent = last.score;
+    $('lastLapNum').className = 'lapnum ' + (last.score >= 80 ? 'good' : last.score >= 55 ? 'warn' : 'bad');
+    $('lastLapTitle').textContent = `Last lap: ${scoreWord(last.score).toLowerCase()}`;
+    $('lastLapText').textContent = `${last.swimmer ? last.swimmer + ' · ' : ''}${fmtDate(last.date)}${angle} · ${trend}`;
     $('lastLapFill').style.setProperty('--w', `${last.score}%`);
     lap.hidden = false;
   } else lap.hidden = true;
@@ -120,6 +126,11 @@ function renderPlanCard() {
 function makePlanFrom(issueKey, swimmerId) {
   const plan = makePlan(issueKey, issueKey ? DRILLS[issueKey] : null, swimmerId);
   store.savePlan(plan); toast('Plan made. It is on the Score tab.'); show('home');
+}
+// The bundled sample lap: same pipeline, same rules, never saved to a swimmer.
+function runSample() {
+  $('homeError').hidden = true; $('strokeSelect').value = SAMPLE.stroke;
+  return analyze(SAMPLE.src, SAMPLE.stroke, activeSwimmer(), 'lap').catch(err => { console.error('SafeDive', err); showError(err.message); });
 }
 function downloadText(text, name, type) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
 
@@ -273,8 +284,8 @@ async function analyze(src, stroke, swimmer, mode = 'lap', which = chosenModel()
   const summary = clipSummary(perFrame, fps);
   const result = scoreClip(summary, stroke, fps);
   const moving = scoredMask(perFrame, fps);           // travelling AND not upright: exactly the frames the score used
-  lastRun = { summary, result, perFrame, keypoints, times, moving, best, stroke, swimmer: swimmer ? swimmer.name : '', swimmerId: swimmer ? swimmer.id : null, src, fps, model: which, swimmerObj: swimmer, mode, date: new Date().toISOString(), sessionId: null };
-  if (result.ok) {
+  lastRun = { summary, result, perFrame, keypoints, times, moving, best, stroke, swimmer: swimmer ? swimmer.name : '', swimmerId: swimmer ? swimmer.id : null, src, fps, model: which, swimmerObj: swimmer, mode, date: new Date().toISOString(), sessionId: null, sample: src === SAMPLE.src };
+  if (result.ok && !lastRun.sample) {            // the sample lap is a demo: never saved to a child's history
     const parts = {}; result.parts.forEach(p => { parts[p.key] = p.pts; });
     withBadges(lastRun.swimmerId, () => {
       const rec = store.addSession({ date: lastRun.date, swimmerId: lastRun.swimmerId, swimmer: lastRun.swimmer, stroke, score: result.score, torsoAngle: summary.torsoAngle, readable: summary.readableFrac, issues: result.issues, parts, fps, timeline: perFrame.map(m => (m ? +m.torsoAngle.toFixed(1) : null)) });
@@ -295,20 +306,36 @@ function renderResults() {
   $('sharedBanner').hidden = !shared; $('resStageWrap').hidden = !!shared;
   $('btnSaveCard').hidden = !!shared; $('btnCopyJson').hidden = !!shared; $('btnShareLink').hidden = !!shared; $('shareBox').hidden = true; $('btnMakePlan').hidden = !!shared;
   $('btnAgain').textContent = shared ? 'Score your own lap' : 'Score another lap';
-  $('resHeader').textContent = `${swimmer ? swimmer + ' · ' : ''}${STROKES[stroke] || stroke} · ${new Date(lastRun.date).toLocaleDateString()}${lastRun.model === 'careful' ? ' · careful model' : ''}`;
+  $('resHeader').textContent = `${lastRun.sample ? 'Our sample lap (not saved) · ' : swimmer ? swimmer + ' · ' : ''}${STROKES[stroke] || stroke} · ${new Date(lastRun.date).toLocaleDateString()}${lastRun.model === 'careful' ? ' · careful model' : ''}`;
   const scoreEl = $('resScore'), refuse = $('resRefuse'), parts = $('resParts'), tips = $('resTips');
   if (!result.ok) {
-    scoreEl.hidden = true; parts.innerHTML = ''; tips.innerHTML = '';
+    scoreEl.hidden = true; parts.innerHTML = ''; tips.innerHTML = ''; $('tipsHead').hidden = true;
     refuse.hidden = false;
     const canRetry = !shared && lastRun.model === 'fast' && lastRun.src && (summary.readableFrac < THRESHOLDS.minReadable || result.steep);
-    refuse.innerHTML = `<b>Not scored.</b> ${esc(result.reason)}<br><span class="fine">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames, travelling in ${Math.round(summary.movingFrac * 100)}%. The app refuses to guess rather than give a number it cannot stand behind. <a href="#" data-go="guide">How to film</a>.</span>${canRetry ? `<button id="btnRetryCareful" class="btn secondary sm" type="button">Read it again with the careful model (slower, ${POSE_MODELS.careful.mb} MB once)</button>` : ''}`;
+    // two concrete things to try, picked by why it was refused
+    const kind = result.steep ? 'steep' : /upright|vertical|end of the pool/i.test(result.reason) ? 'upright' : summary.readableFrac < THRESHOLDS.minReadable ? 'read' : 'still';
+    const tries = { steep: ['Lower the phone: crouch on the deck so it sits a little above the water, side-on.', 'Film from the side of the lane, not from behind or ahead of the swimmer.'],
+      upright: ['Stand on the side of the pool, not the end. From the end a flat body looks vertical.', 'Start after the push-off and stop before the wall, so most of the clip is swimming.'],
+      read: ['Get closer: 3 to 5 metres away, landscape, the swimmer a good size in the frame.', 'Backstroke and back float read best. Freestyle filmed from the surface hides the hips.'],
+      still: ['Start recording after the push-off and stop before the wall.', 'Aim for 10 to 15 seconds of the swimmer travelling across the pool.'] }[kind];
+    refuse.innerHTML = `<b>Not scored.</b> ${esc(result.reason)}<br><span class="fine">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames, travelling in ${Math.round(summary.movingFrac * 100)}%. The app refuses to guess rather than give a number it cannot stand behind.</span>`
+      + `<div class="tries"><b>What to try</b><ul>${tries.map(t => `<li>${t}</li>`).join('')}</ul><a href="#" data-go="guide">The full filming guide</a></div>`
+      + (canRetry ? `<button id="btnRetryCareful" class="btn secondary sm" type="button">Read it again with the careful model (slower, ${POSE_MODELS.careful.mb} MB once)</button>` : '')
+      + (!shared && !lastRun.sample ? '<button id="btnSampleRes" class="btn ghost sm" type="button">See it work on our sample lap</button>' : '');
     if (canRetry) $('btnRetryCareful').onclick = () => analyze(lastRun.src, lastRun.stroke, lastRun.swimmerObj, lastRun.mode, 'careful').catch(err => { console.error('SafeDive', err); showError(err.message); });
+    if ($('btnSampleRes')) $('btnSampleRes').onclick = runSample;
     $('btnMakePlan').hidden = true;
   } else {
-    refuse.hidden = true; scoreEl.hidden = false; $('btnMakePlan').hidden = !!shared;
+    refuse.hidden = true; scoreEl.hidden = false; $('tipsHead').hidden = false; $('btnMakePlan').hidden = !!shared;
     const cls = result.score >= 80 ? 'good' : result.score >= 55 ? 'warn' : 'bad';
     const secs = shared ? summary.scoredFrames : summary.scoredFrames / fps;
     scoreEl.innerHTML = `<div class="num ${cls}">${result.score}</div><div><div class="word">${scoreWord(result.score)}</div><div class="conf">Body readable in ${Math.round(summary.readableFrac * 100)}% of frames · ${secs.toFixed(1)} s of swimming scored</div></div>`;
+    // the number counts up once, the first time this lap is shown (not on resize, not with reduced motion)
+    if (!lastRun.revealed && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      lastRun.revealed = true; const numEl = scoreEl.querySelector('.num'), t0 = performance.now(), dur = 650; numEl.textContent = '0';
+      const step = now => { const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3); numEl.textContent = Math.round(e * result.score); if (p < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+    }
     parts.innerHTML = result.parts.map(p => { const f = p.pts / p.max, fill = f >= 0.8 ? 'var(--good)' : f >= 0.5 ? 'var(--warn)' : 'var(--bad)';
       return `<div class="part"><span class="name">${p.name}</span><span class="pts">${p.pts}<span class="fine">/${p.max}</span></span><span class="val">${esc(p.value)}</span><span class="meter"><i style="--w:${Math.round(f * 100)}%;--fill:${fill}"></i></span></div>`; }).join('');
     // one tip, one drill: the first tip that has a drill leads, full size; the rest follow smaller
@@ -382,7 +409,7 @@ function setupLive() {
 function prepareLive(test) {
   liveTest = test;
   $('liveTitle').textContent = test ? 'Float test' : 'Live coach';
-  $('liveIntro').textContent = test ? `The camera times how long the swimmer stays at the surface, floating or treading, in water over their head. ${test.seconds} seconds passes the skill. Keep the whole body in the shot from the side.` : 'Point the phone at the swimmer from the side. The dial shows the body line against the water as it happens, with one cue you can call out. Nothing is recorded.';
+  $('liveIntro').textContent = test ? `The camera times how long the swimmer stays at the surface, floating or treading, in water over their head. ${test.seconds} seconds passes the skill. Keep the whole body in the shot from the side.` : 'Point the phone at the swimmer from the side. The dial shows the body line as it happens, with one cue to call out. Nothing is recorded.';
   $('holdBox').hidden = !test; $('holdTarget').textContent = `of ${test ? test.seconds : 60} s at the surface`; $('holdSecs').textContent = '0 s'; $('holdFill').style.setProperty('--w', '0%');
   $('liveWord').textContent = 'Camera off'; $('liveCue').textContent = 'Tap Start to turn on the camera.'; $('liveError').hidden = true;
   $('liveAngle').textContent = '–'; $('liveFps').textContent = '–'; $('liveMs').textContent = '–';
@@ -462,6 +489,19 @@ function finishFloat(r, how, swimmer) {
 
 // ---------- progress ----------
 let progressSelected = -1, historyHit = null;
+// one stroked glyph per badge, drawn in the seal's ink (24-unit grid, same stroke style as the tab icons)
+const BADGE_ICONS = {
+  first_lap: '<path d="M9 7l4-3v16M8 20h10"/>',
+  strong_lap: '<path d="M13 3L5 14h6l-1 7 9-12h-6z"/>',
+  flat_board: '<path d="M3 12c4-4 14-4 18 0c-4 4-14 4-18 0z"/><path d="M7 12h10"/>',
+  three_week: '<path d="M3 7l2 2 4-4M3 13l2 2 4-4M3 19l2 2 4-4M13 7h8M13 13h8M13 19h8"/>',
+  comeback: '<path d="M4 18l6-6 4 4 7-7M15 9h6v6"/>',
+  drill_done: '<path d="M3 9h10a5 5 0 1 1 0 10h-1a5 5 0 0 1-5-5v-2H3z"/><path d="M13 9V5"/>',
+  plan_week: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/>',
+  floater: '<circle cx="6" cy="10" r="2.5"/><path d="M9 11h8l4 1M3 17c3 2 6-2 9 0s6 2 9 0"/>',
+  water_safe: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-4.5"/>',
+  streak_4: '<path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3 0-6 1-9z"/>',
+};
 function renderProgress() {
   const sw = activeSwimmer(), s = store.sessionsFor(sw ? sw.id : null);
   const lvl = levelFor(s.length), needs = [0, 3, 8, 15, 25];
@@ -473,7 +513,7 @@ function renderProgress() {
   $('levelFill').style.setProperty('--w', `${levelPct}%`); $('levelMeter').setAttribute('aria-valuenow', levelPct);
   // badges
   const earned = badgesFor(sw ? sw.id : null);
-  $('badgeGrid').innerHTML = BADGES.map(b => `<div class="badge${earned.includes(b.key) ? ' on' : ''}" title="${esc(b.how)}"><span class="seal" aria-hidden="true"></span><b>${b.name}</b><span class="fine">${b.how}</span></div>`).join('');
+  $('badgeGrid').innerHTML = BADGES.map(b => `<div class="badge${earned.includes(b.key) ? ' on' : ''}" title="${esc(b.how)}"><span class="seal" aria-hidden="true"><svg viewBox="0 0 24 24">${BADGE_ICONS[b.key] || ''}</svg></span><b>${b.name}</b><span class="fine">${b.how}</span></div>`).join('');
   const last = s.slice(-12);
   historyHit = drawHistoryChart($('historyChart'), last, progressSelected >= 0 ? progressSelected - (s.length - last.length) : -1);
   const detail = $('sessionDetail');
@@ -577,6 +617,8 @@ window.addEventListener('DOMContentLoaded', () => {
     e.target.value = '';
   };
   $('btnLive').onclick = () => show('live');
+  $('btnSample').onclick = runSample;
+  $('lastLap').onclick = () => { const sw = activeSwimmer(); progressSelected = store.sessionsFor(sw ? sw.id : null).length - 1; show('progress'); };
   $('btnCancel').onclick = () => { cancelFlag = true; show('home'); };
   $('btnAgain').onclick = () => { if (lastRun && lastRun.shared) history.replaceState(null, '', location.pathname); show('home'); };
   $('btnDrillBack').onclick = () => show('results');

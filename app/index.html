@@ -32,7 +32,7 @@
         <h1>Film one lap.<br>Fix one thing.</h1>
       </figcaption>
     </figure>
-    <p class="hero-sub">The app reads the swimmer's body line on this phone and gives one plain tip. Nothing is uploaded.</p>
+    <p class="hero-sub">Reads the swimmer's body line on this phone. One plain tip. Nothing uploaded.</p>
 
     <div class="sectionhead"><span class="label">Swimmer</span><span id="swimmerHint" class="fine"></span></div>
     <div id="swimRowHome" class="swimrow" role="group" aria-label="Choose a swimmer"></div>
@@ -54,8 +54,14 @@
       <button id="btnPick" class="btn primary" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l2-2h6l2 2h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Score a lap</button>
       <input id="fileInput" type="file" accept="video/*" capture="environment" hidden>
       <button id="btnLive" class="btn secondary" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>Live coach</button>
+      <button id="btnSample" class="btn ghost sm" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>No clip yet? Try our sample lap</button>
     </div>
     <div id="homeError" class="notice warn" role="alert" hidden></div>
+
+    <button id="lastLap" class="card lapcard" type="button" hidden>
+      <span id="lastLapNum" class="lapnum">0</span>
+      <span class="lapbody"><b id="lastLapTitle">Last lap</b><span id="lastLapText" class="fine"></span><span class="meter thin" aria-hidden="true"><i id="lastLapFill" style="--w:0%"></i></span></span>
+    </button>
 
     <section id="planCard" class="card" hidden>
       <div class="card-head"><h2>This week</h2><span id="planMeta" class="fine"></span></div>
@@ -68,27 +74,39 @@
       <div><b id="statStreak">0</b><span>week streak</span></div>
       <div><b id="statBest">–</b><span>best score</span></div>
     </div>
-    <div id="lastLap" class="lastlap" hidden><span id="lastLapText"></span><div class="meter" aria-hidden="true"><i id="lastLapFill" style="--w:0%"></i></div></div>
-
-    <div id="installHint" class="notice install" hidden>
-      <div><b>Keep it on the home screen.</b> <span id="installText">Works at the pool with no signal once installed.</span></div>
-      <div class="row tight"><button id="btnInstall" class="btn sm primary" type="button">Install</button><button id="btnInstallNo" class="btn sm ghost" type="button">Not now</button></div>
-    </div>
 
     <button id="safetyLine" class="card linkcard" type="button" data-go="safety">
       <div><b>Water safety</b><span id="safetyLineText" class="fine">Five skills, signed off by you or checked by the camera.</span></div>
       <div class="meter thin" aria-hidden="true" style="--band:100%"><i id="safetyFill" style="--w:0%"></i></div>
     </button>
 
-    <p class="fine">Best results: side of the pool, phone near water level, 10 to 15 seconds of swimming. <a href="#" data-go="guide">How to film</a>.</p>
-    <p class="fine">This is a swim-form helper, not a safety device. An adult must always be watching the water.</p>
+    <div id="installHint" class="notice install" hidden>
+      <div><b>Keep it on the home screen.</b> <span id="installText">Works at the pool with no signal once installed.</span></div>
+      <div class="row tight"><button id="btnInstall" class="btn sm primary" type="button">Install</button><button id="btnInstallNo" class="btn sm ghost" type="button">Not now</button></div>
+    </div>
+
+    <p class="fine">Film from the side of the pool, phone a little above the water, 10 to 15 seconds. <a href="#" data-go="guide">How to film</a>. A swim-form helper, not a safety device: an adult always watches the water.</p>
   </section>
 
   <!-- LIVE COACH -->
   <section id="screen-live" class="screen">
     <h2 id="liveTitle">Live coach</h2>
-    <p id="liveIntro" class="lead">Point the phone at the swimmer from the side. The dial shows the body line against the water as it happens, with one cue you can call out. Nothing is recorded.</p>
-    <div id="liveStage" class="stage live off"><video id="liveVideo" playsinline muted autoplay></video><canvas id="liveOverlay"></canvas><span id="liveBadge" class="livebadge" hidden>Live</span></div>
+    <p id="liveIntro" class="lead">Point the phone at the swimmer from the side. The dial shows the body line as it happens, with one cue to call out. Nothing is recorded.</p>
+    <div id="liveStage" class="stage live off"><video id="liveVideo" playsinline muted autoplay></video><canvas id="liveOverlay"></canvas><span id="liveBadge" class="livebadge" hidden>Live</span>
+      <svg class="frameguide" viewBox="0 0 320 180" aria-hidden="true">
+        <rect width="320" height="180" fill="var(--paper-deep)"/>
+        <path d="M0 106c20-7 40-7 60 0s40 7 60 0 40-7 60 0 40 7 60 0 40-7 60 0 20 7 20 7V180H0z" fill="var(--aqua)" opacity=".6"/>
+        <g fill="none" stroke="var(--ink)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="92" cy="96" r="10" fill="var(--paper)"/>
+          <path d="M104 100l86 6M190 106l34 4"/>
+          <path d="M130 102l-10-24"/>
+        </g>
+        <g fill="none" stroke="var(--sun)" stroke-width="4" stroke-linecap="square">
+          <path d="M14 36V14h22M284 14h22v22M14 144v22h22M306 144v22h-22"/>
+        </g>
+        <text x="160" y="160" text-anchor="middle" fill="var(--ink)">Side view · phone a little above the water</text>
+      </svg>
+    </div>
     <canvas id="dial" class="chart dial" role="img" aria-label="Body line against the water line"></canvas>
     <div class="liveword" role="status" aria-live="polite"><b id="liveWord">Camera off</b><span id="liveCue">Tap Start to turn on the camera.</span></div>
     <div id="holdBox" class="holdbox" hidden>
@@ -110,7 +128,7 @@
   <!-- WATER SAFETY -->
   <section id="screen-safety" class="screen">
     <h2>Water safety</h2>
-    <p class="lead">Five skills that give a child a real chance after an unexpected fall into deep water. The American Red Cross calls them water competency. Four you watch and sign off. The minute at the surface, the camera can check.</p>
+    <p class="lead">Five skills that give a child a real chance after a fall into deep water: what the American Red Cross calls water competency. Sign off four as you watch them. The camera can time the minute at the surface.</p>
     <div id="swimRowSafety" class="swimrow" role="group" aria-label="Choose a swimmer"></div>
     <div id="safetyEmpty" class="empty" hidden><b>Add a swimmer first</b><p>Skills are kept per child.</p><button class="btn secondary sm" type="button" data-add-swimmer>Add a swimmer</button></div>
     <div id="safetyBody">
@@ -142,7 +160,7 @@
   <!-- GUIDE: how to film -->
   <section id="screen-guide" class="screen">
     <h2>How to film a lap the app can read</h2>
-    <p class="lead">The pose model only scores frames where it can see both shoulders and both hips. These five habits came straight out of our test footage.</p>
+    <p class="lead">The pose model scores only frames where it can see both shoulders and both hips. Six habits, straight out of our test footage.</p>
     <ol class="rules">
       <li><b>Stand on the side, not the end.</b> The app measures the angle between shoulders and hips, so it needs a side view.</li>
       <li><b>Crouch on the deck, a little above the water.</b> Not standing height, which tilts the body in the picture, and not right at the surface, which hides the hips: in our study freestyle filmed from the surface read in 12 to 26% of frames, the same stroke filmed close and slightly above the water read in 90%.</li>
@@ -206,9 +224,9 @@
       <div id="scrubReadout" class="fine mono"></div>
     </div>
     <canvas id="angleChart" class="chart" role="img" aria-label="Body angle over the clip"></canvas>
-    <p class="fine">Orange line: body angle while swimming (0° is flat). Aqua band: the target; where the line runs through it the ink prints green. Short marks: readable but still or upright (at the wall, treading), so not scored. Each reading is good to about ±5°. Tap the chart to jump.</p>
+    <p class="fine">Orange: body angle while swimming, 0° is flat. Aqua band: the target, green where the line sits inside it. Short marks: still or upright frames, not scored. Readings are good to about ±5°. Tap the chart to jump.</p>
 
-    <h3>What to fix</h3>
+    <h3 id="tipsHead">What to fix</h3>
     <ul id="resTips" class="tips"></ul>
 
     <div class="row"><button id="btnMakePlan" class="btn secondary" type="button">Plan this week</button><button id="btnShareLink" class="btn secondary" type="button">Share link</button></div>

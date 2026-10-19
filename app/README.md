@@ -7,7 +7,7 @@ Built for the 2026 Congressional App Challenge by the SafeDive team. It grew out
 drowning-detection research project: same idea (skeleton keypoints from video, then simple
 geometry), pointed at swim lessons instead of emergencies.
 
-What is in the app (v0.4), behind five tabs:
+What is in the app (v0.5), behind five tabs:
 
 - **Score.** Pick a clip, the model reads it on the phone, you get a 0 to 100 score, three parts, one tip
   and one drill. Step through the frames it used (skeleton, target line, angle chart). Save a report card,
@@ -83,7 +83,7 @@ Swimmers are small in the frame and half under water, which MoveNet was never tr
 | `tools/serve.js` | tiny dev server: HTTP range support (video seeking) + cross-origin isolation headers (multi-threaded WebAssembly) |
 | `test/` | unit tests (metrics, scoring, report JSON, drills), `dump_frames.py` (clips to raw frames) and the Node end-to-end harness on real clips |
 | `docs/` | product brief, MVP spec, user flows, wireframes, analysis schema, privacy, developer handoff, usability test plan |
-| `samples/` | six short clips from our own filming, for demos and tests |
+| `samples/` | six short clips from our own filming, for demos and tests; `normal_swimming_IMG_0389.mp4` is the "Try our sample lap" clip, the one of the six that the current rules score (90) |
 
 ## Honest limits
 

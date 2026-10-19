@@ -5,7 +5,9 @@ assert.deepStrictEqual(earnedBadges({}), [], 'nothing earned with no data');
 const lap = (score, daysAgo, extra = {}) => Object.assign({ date: new Date(Date.now() - daysAgo * 864e5).toISOString(), score, torsoAngle: 40 }, extra);
 let e = earnedBadges({ sessions: [lap(50, 0)] }); assert.deepStrictEqual(e, ['first_lap']);
 e = earnedBadges({ sessions: [lap(50, 1), lap(85, 0, { torsoAngle: 12 })] }); assert.ok(e.includes('strong_lap') && e.includes('flat_board') && e.includes('comeback'), 'strong, flat, comeback: ' + e);
-e = earnedBadges({ sessions: [lap(50, 2), lap(52, 1), lap(51, 0)] }); assert.ok(e.includes('three_week') && !e.includes('comeback'));
+// three laps inside one Monday-to-Sunday week, on fixed dates: relative days broke on a Monday, when yesterday is last week
+const on = (score, day) => ({ date: new Date(2026, 9, day, 12).toISOString(), score, torsoAngle: 40 });   // Tue 13, Wed 14, Thu 15 Oct 2026
+e = earnedBadges({ sessions: [on(50, 13), on(52, 14), on(51, 15)] }); assert.ok(e.includes('three_week') && !e.includes('comeback'), 'three in a week: ' + e);
 e = earnedBadges({ sessions: [lap(50, 0, { drillDone: true })] }); assert.ok(e.includes('drill_done'));
 e = earnedBadges({ plan: { items: [{ kind: 'drill', done: true }, { kind: 'film', done: true }] } }); assert.ok(e.includes('plan_week') && e.includes('drill_done'));
 e = earnedBadges({ skills: { float: { how: 'app' } } }); assert.deepStrictEqual(e, ['floater']);

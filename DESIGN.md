@@ -318,6 +318,15 @@ Shipping rasters are the owner's own photographs in `app/assets/examples/*.jpg` 
 - **Don't** round beyond 3 px on anything but the level stamp; meters, bars and rules stay square.
 
 
+## v0.5 additions (2026-10-19)
+
+- Paper grain: a fixed, faint fractal-noise tile under all content (`body::before`, z-index -1, opacity .14). Risograph paper has tooth; the grain sits under the paper colour only and never over photos or cards.
+- The last-lap card (`.lapcard`): the home screen's own score block. Big number in the verdict colour (overprint green, sun, ink), one-line verdict, trend against the lap before, the overprint meter. A button: tap opens the history.
+- Badge glyphs: one stroked 24-grid glyph per badge, faint ink on blank paper, paper-coloured on the printed seal, counter-rotated so the glyph stays upright inside the tilted seal.
+- Live framing guide (`.frameguide`): an inline SVG in the stage before the camera is on. Paper-deep sky, aqua water, an ink swimmer flat on the back, sun corner marks, one line of display type. Replaces the grey "Nothing is recorded" box.
+- Refusals carry a "What to try" list (`.tries`) chosen by the reason, plus the sample-lap button, so a refusal is never a dead end.
+- The score counts up once over 650 ms (cubic ease-out), skipped under reduced motion and on resize re-renders.
+
 ## v0.4 additions (2026-10-17, polish pass with the Apple fluid-interface rules and shadcn contracts, kept inside this world)
 
 - **Type ramp in rem.** The five steps are now `.8125 / 1 / 1.375 / 2 / 3 rem` and the score `6rem`: the same pixels at the default size, and the whole flyer scales with the reader's text-size setting. Spacing and rules stay in px (a print grid does not scale).
