@@ -253,7 +253,7 @@ button.hist.on { border-bottom-color: var(--ink); }
 .stamp.on b { color: var(--paper); transform: rotate(-8deg) scale(1.06); } .stamp.ink0.on b { background: var(--aqua); } .stamp.ink1.on b { background: var(--sun); } .stamp.ink2.on b { background: var(--over); } .stamp.ink3.on b { background: var(--ink); }
 .stamp.on span { color: var(--sun-text); }
 .stamp.ink0.on b, .stamp.ink1.on b { color: var(--ink); }   /* paper on aqua or orange is under 3:1; ink on them reads */
-.stamp.add b { border-style: dashed; border-color: var(--ink-2); color: var(--ink-2); font-weight: 400; } .stamp.add span { color: var(--ink-2); }
+.stamp.add b { border-style: dashed; border-color: var(--ink-2); color: var(--ink-2); font-weight: 400; } .stamp.add span { color: var(--ink-2); } .stamp.add { width: auto; min-width: 68px; padding: 0 4px; } .stamp.add span { max-width: none; }
 .stamp:active b { transform: rotate(-8deg) scale(.95); transition-duration: 0s; }
 @media (hover: hover) { .stamp:hover b { transform: rotate(-4deg) scale(1.06); } }
 .addrow { display: grid; grid-template-columns: 1fr; gap: 10px; align-items: end; margin: 4px 0 8px; } .addrow .btn { margin: 0; }

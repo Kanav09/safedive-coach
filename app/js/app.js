@@ -89,6 +89,9 @@ function refreshHome() {
   const sw = activeSwimmer(), s = store.sessionsFor(sw ? sw.id : null);
   $('swimmerHint').textContent = sw ? '' : (store.swimmers().length ? 'Tap a name' : 'Laps and skills are kept per child');
   $('statSessions').textContent = s.length;
+  document.querySelector('#screen-home .stats').hidden = s.length === 0;   // three zeros teach nothing; the strip appears with the first lap
+  const anyLap = store.sessions().length > 0, sample = $('btnSample');   // first run: seeing it work matters more than the live coach
+  sample.className = anyLap ? 'btn ghost sm' : 'btn secondary'; sample.lastChild.textContent = anyLap ? 'No clip yet? Try our sample lap' : 'See it work on our sample lap';
   $('statStreak').textContent = weekStreak(s);
   $('statBest').textContent = s.length ? Math.max(...s.map(x => x.score)) : '–';
   $('levelPill').textContent = levelFor(s.length).name;
