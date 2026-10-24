@@ -15,11 +15,22 @@ self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(keys => 
 // Heavy, versioned files (model, wasm, fonts, photos) are served from the cache first: they never change without a new CACHE name.
 // Everything else (html, css, js, json) is network-first with the cache as the offline fallback, so an update shows up on the next visit.
 const HEAVY = /\.(onnx|wasm|mjs|woff2|jpg|png|svg)$/;
+// The pose model runs on several CPU threads only when the page is "cross-origin isolated", which needs two response headers
+// the hosting server must send. GitHub Pages cannot send them, so this worker adds them to every response it serves; app.js
+// reloads the page once after the worker takes control, and from then on the model gets its threads (about twice as fast).
+// Everything the app loads is same-origin, so the stricter embedder policy blocks nothing.
+const ISOLATE = { 'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Embedder-Policy': 'require-corp' };
+function isolate(res) {
+  if (!res || res.status === 0 || res.status === 206) return res;       // opaque or partial: leave untouched
+  const headers = new Headers(res.headers);
+  for (const k in ISOLATE) headers.set(k, ISOLATE[k]);
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+}
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
   if (e.request.headers.has('range')) return;                           // video seeking: let the browser talk to the server directly
   const put = res => { if (res && res.ok && res.type === 'basic') { const copy = res.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); } return res; };
-  if (HEAVY.test(url.pathname)) e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(put)));
-  else e.respondWith(fetch(e.request).then(put).catch(() => caches.match(e.request, { ignoreSearch: true })));
+  if (HEAVY.test(url.pathname)) e.respondWith(caches.match(e.request).then(hit => hit || fetch(e.request).then(put)).then(isolate));
+  else e.respondWith(fetch(e.request).then(put).catch(() => caches.match(e.request, { ignoreSearch: true })).then(isolate));
 });

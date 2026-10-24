@@ -573,7 +573,17 @@ function renderSettings() {
 
 // ---------- install (PWA) ----------
 function setupInstall() {
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname))) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    // On a host that cannot send the isolation headers (GitHub Pages), sw.js adds them; the page has to load once more through the
+    // worker before the model gets its threads. Reload once, only while idle on the home screen, never in the middle of a reading.
+    if (!crossOriginIsolated && !sessionStorage.getItem('safedive.reloaded')) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!$('screen-home').classList.contains('active')) return;
+        sessionStorage.setItem('safedive.reloaded', '1'); location.reload();
+      });
+    }
+  }
   const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   if (standalone || store.settings().installDismissed) return;
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('installHint').hidden = false; });
