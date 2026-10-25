@@ -255,7 +255,7 @@ button.hist.on { border-bottom-color: var(--ink); }
 .stamp.ink0.on b, .stamp.ink1.on b { color: var(--ink); }   /* paper on aqua or orange is under 3:1; ink on them reads */
 .stamp.add b { border-style: dashed; border-color: var(--ink-2); color: var(--ink-2); font-weight: 400; } .stamp.add span { color: var(--ink-2); } .stamp.add { width: auto; min-width: 68px; padding: 0 4px; } .stamp.add span { max-width: none; }
 .stamp:active b { transform: rotate(-8deg) scale(.95); transition-duration: 0s; }
-@media (hover: hover) { .stamp:hover b { transform: rotate(-4deg) scale(1.06); } }
+@media (hover: hover) { .stamp:hover b { background: var(--paper-bright); } }
 .addrow { display: grid; grid-template-columns: 1fr; gap: 10px; align-items: end; margin: 4px 0 8px; } .addrow .btn { margin: 0; }
 @media (min-width: 480px) { .addrow { grid-template-columns: 1fr auto auto; } }
 .actions { display: grid; gap: 0; margin-top: 8px; } .actions .field { margin-bottom: 2px; } .actions .btn.secondary { margin-top: 10px; }
