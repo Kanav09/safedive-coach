@@ -23,7 +23,7 @@ under the talking. Every claim in it must be something the app actually does on 
 | 0:00 | You at a pool, phone in hand | "Swim lessons end with 'good job'. Parents film laps they can't read. SafeDive Coach reads them, on the phone, and says the one thing to fix." |
 | 0:15 | Screen: home, tap "See it work on our sample lap" | "Everything runs on the phone. A pose model finds the swimmer's shoulders and hips in every frame. Nothing is uploaded, ever." |
 | 0:35 | Screen: reading the swimmer (strip filling, body angle readout) | "It follows one swimmer, smooths the points, and only counts frames where they are actually swimming." |
-| 0:50 | Screen: 90, Strong lap, the three parts, step through the lap, the angle chart | "A score out of 100: body line, head position, stroke rhythm. Every number comes with the frames it used and a ±5° error bar." |
+| 0:50 | Screen: 90, Strong lap, the three parts, step through the lap, the angle chart (the newer script with the cooler open and phone passes is in the shared doc "SafeDive Coach demo video script") | "A score out of 100: body line, head position, stroke rhythm. Every number comes with the frames it used and a ±5° error bar." |
 | 1:10 | Screen: a refused clip (freestyle from the deck), "What to try" | "When the footage is bad it refuses and tells you how to film instead of guessing. That took an 87-clip study to get right." |
 | 1:30 | Real pool: you filming a lap from a crouch on the side; then the result | "A real lap, filmed from the side, a little above the water." |
 | 1:55 | Screen: Live coach, dial moving, cue spoken | "Live mode: the same model a few times a second, with one cue you can call out." |
@@ -38,7 +38,8 @@ SafeDive Coach scores one lap of a child's swimming from a short phone clip. A p
 browser finds the shoulders and hips in each frame, the app measures the body line against the water, and
 it gives a 0 to 100 score, one plain tip and one drill. It also has a live mode, a water-safety skills
 checklist based on the American Red Cross water-competency skills, progress and badges. Nothing is uploaded:
-the video never leaves the phone.
+the video never leaves the phone. It runs in the phone's browser from https://kanav09.github.io/safedive-coach/
+and installs to the home screen, so anyone can try it without an app store.
 
 **What inspired you to create this app?**
 It grew out of our drowning-detection research project, which used the same idea: find a person's skeleton
@@ -57,7 +58,11 @@ lap reading steeper than 45° the whole way is a camera-position problem, not si
 43 more clips the rules were never tuned on. Third, running a 12 MB model in a phone browser with no server:
 we export YOLO11-pose to ONNX, run it with onnxruntime-web, and wrote the letterboxing, decoding and
 non-maximum suppression ourselves in plain JavaScript so there is no build step and every file can be
-explained.
+explained. A fourth one we found late: a slow phone reads 4 frames a second and a fast one 8, and two of our
+rules counted frames instead of seconds, so the same lap scored 100 on one phone and 90 on the other. We
+rewrote the moving-swimmer window and the stroke-rhythm estimate to work in seconds on the real time axis,
+and the rhythm is now reported only when a steady beat is visible for two and a half cycles; otherwise the
+app says so and gives half marks. The same clip now scores the same at both rates, and the tests check it.
 
 **What improvements would you make?**
 Freestyle filmed from the pool surface is still mostly unreadable; a model fine-tuned on swimmers would fix
