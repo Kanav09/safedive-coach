@@ -36,8 +36,10 @@ function frameMetrics(kps) {
 
 // Frames where the swimmer is not travelling (standing at the wall, resting) must not be scored.
 // A frame counts as "moving" when the shoulders travel at least minBodyPerSec torso-lengths per second
-// over a window of `win` frames around it.
-function markMoving(frames, fps, win = 15, minBodyPerSec = 0.35) {
+// over a window of `winSec` seconds around it. The window is in seconds, not frames, so a phone that reads
+// 4 frames a second judges a lap the same way as one that reads 8.
+function markMoving(frames, fps, winSec = 2, minBodyPerSec = 0.35) {
+  const win = Math.max(1, Math.round(winSec * fps));
   const out = frames.map(() => false);
   for (let i = 0; i < frames.length; i++) {
     if (!frames[i]) continue;
@@ -56,20 +58,44 @@ function markMoving(frames, fps, win = 15, minBodyPerSec = 0.35) {
   return out;
 }
 
-// Dominant up-and-down rhythm of the wrists, in cycles per second, or null if too short.
+// Dominant up-and-down rhythm of the wrists, in cycles per second, or null when there is not enough to go on.
+// `wristSeries` has one entry per analysed frame (null where the wrists were not seen or the frame was not scored), so
+// entry i is at time i / fps. Everything here is in seconds, not frames, so a phone reading 4 frames a second gets the
+// same answer as one reading 8 (v0.6: before this, the rhythm points moved with the frame rate).
+//   1. wild samples (a splash, the other wrist, a stray hand) are dropped: more than 3 median deviations from the median;
+//   2. at least 2 s of wrist data, seen in at least half of those frames, or null;
+//   3. the slow drift is removed (perspective changes the wrist height as the swimmer crosses the frame);
+//   4. a DFT scan over the human stroke band on the real time axis, never above what the frame rate can tell apart;
+//   5. a rhythm is reported only when one frequency carries most of the up-and-down (a pure wave scores 0.5 here, noise
+//      near 1/n), it is not at the edge of the scan, and at least two and a half cycles are in view. Otherwise null, and the
+//      scorer gives half marks with "no steady rhythm seen" rather than a number it cannot stand behind.
 function strokeRate(wristSeries, fps) {
-  const s = wristSeries.filter(v => v !== null && v !== undefined);
-  if (s.length < fps * 1.5) return null;
-  const mean = s.reduce((a, b) => a + b, 0) / s.length;
-  const x = s.map(v => v - mean);
+  let t = [], v = [];
+  wristSeries.forEach((w, i) => { if (w !== null && w !== undefined) { t.push(i / fps); v.push(w); } });
+  if (v.length < 8) return null;
+  const m0 = median(v), mad = median(v.map(x => Math.abs(x - m0))) || 1e-9;
+  const keep = v.map(x => Math.abs(x - m0) <= 3 * 1.4826 * mad);
+  t = t.filter((_, i) => keep[i]); v = v.filter((_, i) => keep[i]);
+  const span = t.length ? t[t.length - 1] - t[0] : 0;
+  if (v.length < 8 || span < 2) return null;
+  if (v.length < 0.5 * span * fps) return null;
+  const n = v.length, tm = t.reduce((a, b) => a + b, 0) / n, vm = v.reduce((a, b) => a + b, 0) / n;
+  let sxy = 0, sxx = 0; for (let i = 0; i < n; i++) { sxy += (t[i] - tm) * (v[i] - vm); sxx += (t[i] - tm) ** 2; }
+  const slope = sxx ? sxy / sxx : 0;
+  const x = v.map((y, i) => y - vm - slope * (t[i] - tm));
+  const fMin = 0.4, fMax = Math.min(3.0, 0.45 * fps);
   let best = null, bestPow = -1;
-  for (let f = 0.3; f <= 3.0; f += 0.05) {            // simple DFT scan over the human stroke band
+  for (let f = fMin; f <= fMax + 1e-9; f += 0.05) {
     let re = 0, im = 0;
-    for (let n = 0; n < x.length; n++) { const w = 2 * Math.PI * f * n / fps; re += x[n] * Math.cos(w); im -= x[n] * Math.sin(w); }
+    for (let i = 0; i < n; i++) { const w = 2 * Math.PI * f * t[i]; re += x[i] * Math.cos(w); im -= x[i] * Math.sin(w); }
     const p = re * re + im * im;
     if (p > bestPow) { bestPow = p; best = f; }
   }
-  return best;
+  const energy = x.reduce((a, y) => a + y * y, 0);
+  const share = energy ? bestPow / (n * energy) : 0;
+  if (best === null || best <= fMin + 1e-9 || best >= fMax - 1e-9) return null;
+  if (share < 0.3 || best * span < 2.5) return null;
+  return +best.toFixed(2);
 }
 
 function median(arr) {
@@ -96,7 +122,7 @@ function clipSummary(perFrame, fps) {
     torsoAngle: median(scored.map(f => f.torsoAngle)),
     hipDrop: median(scored.map(f => f.hipDrop)),
     headLift: median(scored.map(f => f.headLift)),
-    strokeHz: strokeRate(scored.map(f => f.wristY), fps),
+    strokeHz: strokeRate(perFrame.map((f, i) => (f && moving[i] && f.torsoAngle <= UPRIGHT_MAX ? f.wristY : null)), fps),   // scored frames only, kept in their place on the clock
     scoredFrames: scored.length,
   };
 }

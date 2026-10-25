@@ -19,6 +19,9 @@
 // Eur J Appl Physiol 91:649) and 31–38 cycles/min at 0.9–1.1 m/s for 12-year-olds (Poujade et al. 2002, 87:1), which is
 // 1.0–1.3 Hz per arm; backstroke at 11–13 y reaches 38–43 cycles/min (Silva et al. 2013), 1.3–1.4 Hz per arm.
 // Breaststroke adults 32–43 cycles/min (0.54–0.89 Hz); flutter kick all-out 2.4 Hz (Ng et al. 2019). No child data for those.
+// The rate is measured on the real time axis (metrics.js strokeRate) and reported only when a steady rhythm is in view for at
+// least two and a half cycles; otherwise rhythm gets half marks. A phone reading 4 frames a second cannot tell apart rates above 1.8 Hz,
+// which only matters for an all-out kick, and a kick that fast still lands inside its (wide) band.
 
 const THRESHOLDS = {
   minReadable: 0.30,     // below this share of readable frames we refuse to score (our calibration, 87-clip study)
@@ -88,7 +91,7 @@ function scoreClip(summary, stroke, fps) {
   const hz = summary.strokeHz;
   const [slo, shi] = T.strokeHz[stroke] || T.strokeHz.freestyle;
   let rhythmPts = 20;
-  if (hz === null) { rhythmPts = 10; parts.push({ key: 'rhythm', name: 'Stroke rhythm', pts: 10, max: 20, value: 'arms not visible long enough' }); }
+  if (hz === null) { rhythmPts = 10; parts.push({ key: 'rhythm', name: 'Stroke rhythm', pts: 10, max: 20, value: 'no steady rhythm seen, half marks' }); }
   else {
     if (hz < slo) rhythmPts = clamp(20 - 40 * (slo - hz), 0, 20);
     if (hz > shi) rhythmPts = clamp(20 - 20 * (hz - shi), 0, 20);

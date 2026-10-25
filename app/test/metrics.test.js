@@ -76,3 +76,27 @@ console.log('gap check passed');
   assert.ok(r4.ok && r4.issues[0] === 'hips_low' && /film lower/.test(r4.tips[0]), '38 degrees still scores, with the camera caveat');
   console.log('upright rule checks passed');
 }
+
+// v0.6: frame-rate independence. The same lap read at 8 and at 4 frames a second must give the same rhythm and the same
+// share of moving frames (a slower phone drops to 4 fps; the score must not change with the phone).
+{
+  const lapAt = f => Array.from({ length: Math.round(6 * f) }, (_, i) => M.frameMetrics(body({ sx: 100 + i * (90 / f), wristY: 100 + 20 * Math.sin(2 * Math.PI * 1.2 * i / f) })));
+  const s8 = M.clipSummary(lapAt(8), 8), s4 = M.clipSummary(lapAt(4), 4);
+  assert.ok(Math.abs(s8.strokeHz - 1.2) < 0.1 && Math.abs(s4.strokeHz - 1.2) < 0.1, `rhythm at 8 and 4 fps: ${s8.strokeHz} ${s4.strokeHz}`);
+  assert.ok(Math.abs(s8.movingFrac - s4.movingFrac) < 0.1, `moving share at 8 and 4 fps: ${s8.movingFrac} ${s4.movingFrac}`);
+  // gaps keep their place on the clock: wrists seen only every other frame still read the right rhythm
+  const gappyWrist = Array.from({ length: 48 }, (_, i) => (i % 2 ? null : Math.sin(2 * Math.PI * 1.0 * i / 8)));
+  assert.ok(Math.abs(M.strokeRate(gappyWrist, 8) - 1.0) < 0.1, 'gappy wrist series keeps its timing');
+  assert.strictEqual(M.strokeRate([1, 0, 1, 0, 1, 0, 1, 0, 1], 4), null, 'under 2 s of wrist data -> null');
+  // a slow drift across the frame does not hide the rhythm, and a wild sample does not break it
+  const drift = Array.from({ length: 48 }, (_, i) => 100 + 3 * i / 8 + 20 * Math.sin(2 * Math.PI * 1.0 * i / 8)); drift[20] = 400;
+  assert.ok(Math.abs(M.strokeRate(drift, 8) - 1.0) < 0.1, 'drift and one wild sample: still ~1 Hz');
+  // no steady rhythm (random wrist heights) -> null, never a made-up number
+  let seed = 7; const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  assert.strictEqual(M.strokeRate(Array.from({ length: 48 }, () => 100 + rnd()), 8), null, 'noise -> null');
+  // the real sample lap's wrist track (11 samples over 2.1 s, a brief wobble then flat, one splash): not enough, at either rate
+  const real = Array(35).fill(null); [[0, 4.33], [1, 3.74], [2, 3.31], [3, 4.07], [4, 3.67], [5, 3.28], [6, 3.65], [8, 3.46], [12, 3.51], [14, 3.52], [17, 8.92]].forEach(([i, w]) => { real[i] = w; });
+  assert.strictEqual(M.strokeRate(real, 8), null, 'sample lap at 8 fps: no steady rhythm');
+  assert.strictEqual(M.strokeRate(real.filter((_, i) => i % 2 === 0), 4), null, 'sample lap at 4 fps: no steady rhythm');
+  console.log('frame-rate independence checks passed');
+}
